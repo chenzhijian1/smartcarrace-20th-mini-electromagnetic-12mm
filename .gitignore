@@ -1,12 +1,18 @@
 # 忽略Libraries文件夹下的所有文件
-Libraries/*
+smartcarrace-20th-mini-electromagnetic/Libraries/*
+
+# 忽略/.vscode文件夹
+.vscode/*
 
 # 忽略Project/.vscode文件夹
-Project/.vscode/*
+smartcarrace-20th-mini-electromagnetic/Project/.vscode/*
 
 # 忽略Project/MDK/.vscode和Out_File文件夹
-Project/MDK/.vscode/*
-Project/MDK/Out_File/*
+smartcarrace-20th-mini-electromagnetic/Project/MDK/.vscode/*
+smartcarrace-20th-mini-electromagnetic/Project/MDK/Out_File/*
 
 # 忽略日志文件
 *.log
+
+# 忽略配置文件
+*.json

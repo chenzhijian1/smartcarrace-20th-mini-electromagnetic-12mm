@@ -1,5 +1,11 @@
 {
     "files.associations": {
-        "headfile.h": "c"
+        "headfile.h": "c",
+        "pid.h": "c"
+    },
+    "KeilAssistant.Keil.HOME": {
+        "MDK": "F:\\keil5",
+        "C51": "F:\\keil5",
+        "C251": "F:\\keil5"
     }
 }
