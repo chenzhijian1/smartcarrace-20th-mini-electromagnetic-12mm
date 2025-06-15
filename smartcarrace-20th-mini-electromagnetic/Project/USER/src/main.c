@@ -75,10 +75,16 @@ void main(void)
             ips114_show();
         }
 
+        // 此处所有的按键都是调试用，实际需要通过检测磁钢停车来
+        if (KEY1_PIN == 0) {
+            write_path();
+        }
+
         if (KEY2_PIN == 0) // 切换模式
         {
             refresh();
             j = 1;
+            flag_end = 0;
 
             timing_started_start = 1;
         }
@@ -90,10 +96,11 @@ void main(void)
             timer_cnt = 0;
         }
 
-        if (KEY3_PIN == 0) // 重置，调试用
+        if (KEY3_PIN == 0) // 重置
         {
         	refresh();
             j = 1;
+            flag_end = 0;
         }
 
         if (KEY4_PIN == 0)  flag_stop = !flag_stop;

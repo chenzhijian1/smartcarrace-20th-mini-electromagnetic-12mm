@@ -2,9 +2,9 @@
 
 PathPoint path_points[MAX_PATH_POINTS] = {0};
 
-uint8 path_point_count = 0; // 第一个点为起点已经初始化为0,0
-uint8 j = 1; // 用于移动路径点的索引
-uint8 path_point_count_threshold = 100; // 路径点阈值
+uint16 path_point_count = 0; // 第一个点为起点已经初始化为0,0
+uint16 j = 1; // 用于移动路径点的索引
+uint16 path_point_count_threshold = 100; // 路径点阈值
 uint8 flag_isturn = 0; // 0表示上一段是直道,1表示上一段是弯道
 uint8 flag_end = 0; // 0表示未到达终点,1表示到达终点
 uint8 send_flag_nav = 0;
@@ -127,8 +127,94 @@ void speed_select(uint8 isturn, float middle, float dis, float angle, float angl
     }
 }
 
-void refresh(void)
-{
+void refresh(void) {
     encoder_clear();
     yaw = 0;
 }
+
+void write_path(void) {
+    // 将路径数据写入 EEPROM，起始地址选择 0x200，避免与 my_peripheral.c 中参数区冲突
+    const uint16 PATH_BASE_ADDR = 0x200;   // 第二页起始地址 (0x000-0x1FF 为参数区)
+    uint16 addr = PATH_BASE_ADDR;
+    uint16 i;
+
+    // 计算最多可能用到的页并提前擦除，最多 500 个点，大约 10 kB
+    iap_erase_page(0x200);   // 0x200 – 0x3FF
+    iap_erase_page(0x400);   // 0x400 – 0x5FF
+    iap_erase_page(0x600);   // 0x600 – 0x7FF
+    iap_erase_page(0x800);   // 0x800 – 0x9FF
+    iap_erase_page(0xA00);   // 0xA00 – 0xBFF
+    iap_erase_page(0xC00);   // 0xC00 – 0xDFF
+    iap_erase_page(0xE00);   // 0xE00 – 0xFFF
+    iap_erase_page(0x1000);   // 0x1000 – 0x11FF
+    iap_erase_page(0x1200);   // 0x1200 – 0x13FF
+    iap_erase_page(0x1400);   // 0x1400 – 0x15FF
+    iap_erase_page(0x1600);   // 0x1600 – 0x17FF
+    iap_erase_page(0x1800);   // 0x1800 – 0x19FF
+    iap_erase_page(0x1A00);   // 0x1A00 – 0x1BFF
+    iap_erase_page(0x1C00);   // 0x1C00 – 0x1DFF
+    iap_erase_page(0x1E00);   // 0x1E00 – 0x1FFF
+    iap_erase_page(0x2000);   // 0x2000 – 0x21FF
+    iap_erase_page(0x2200);   // 0x2200 – 0x23FF
+    iap_erase_page(0x2400);   // 0x2400 – 0x25FF
+    iap_erase_page(0x2600);   // 0x2600 – 0x27FF
+
+    /*
+     * 先存储路径点数量，方便读取复原
+     * 采用 extern_iap_write_float 写入：整数位 3 位，小数 0 位
+     * 长度 = num + pointnum + 3 = 3 + 0 + 3 = 6 字节
+     */
+    extern_iap_write_float((float)path_point_count, 3, 0, addr);
+    addr += 6;
+
+    /*
+     * 依次写入各个路径点：
+     * distance : 整数 5 位，小数 1 位  -> 5 + 1 + 3 = 9 字节
+     * yaw      : 整数 3 位，小数 1 位  -> 3 + 1 + 3 = 7 字节
+     * isturn   : 整数 1 位，小数 0 位  -> 1 + 0 + 3 = 4 字节
+     * 总计每点 20 字节
+     */
+    for (i = 0; i < path_point_count; i++) {
+        // 距离
+        extern_iap_write_float((float)path_points[i].distance, 5, 1, addr);
+        addr += 9;
+
+        // 角度
+        extern_iap_write_float((float)path_points[i].yaw_relative, 3, 1, addr);
+        addr += 7;
+
+        // 是否转弯标志（0/1）
+        extern_iap_write_float((float)path_points[i].isturn, 1, 0, addr);
+        addr += 4;
+    }
+}
+
+void read_path(void) {
+    const uint16 PATH_BASE_ADDR = 0x200;
+    uint16 addr = PATH_BASE_ADDR;
+    uint16 i;
+
+    /* 读取路径点数量 */
+    // path_point_count = (uint16)iap_read_float(6, addr);
+    if (path_point_count > MAX_PATH_POINTS) {
+        path_point_count = MAX_PATH_POINTS;
+        flag_key_control = 0;
+    }
+    addr += 6;
+
+    /* 按顺序读取各路径点数据 */
+    for (i = 0; i < path_point_count; i++) {
+        /* distance 5 整 1 小 : 9 字节 */
+        path_points[i].distance = iap_read_float(9, addr);
+        addr += 9;
+
+        /* yaw 3 整 1 小 : 7 字节 */
+        path_points[i].yaw_relative = iap_read_float(7, addr);
+        addr += 7;
+
+        /* isturn 1 整 0 小 : 4 字节 */
+        path_points[i].isturn = (uint8)iap_read_float(4, addr);
+        addr += 4;
+    }
+}
+

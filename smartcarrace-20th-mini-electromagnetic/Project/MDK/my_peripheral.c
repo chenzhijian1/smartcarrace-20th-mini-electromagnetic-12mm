@@ -180,6 +180,16 @@ void DataInit() // eeprom初始化数据
     block_back_encode = iap_read_float(7, 0x80);
     block_out_angle = iap_read_float(7, 0xd0);
     block_back_angle = iap_read_float(7, 0xd7);
+
+    // 有路径点时，读取路径点，并设置 flag_key_fast 为 1 进入快速循迹模式
+    path_point_count = (uint16)iap_read_float(6, 0x200);
+    if (path_point_count != 0) {
+        read_path();
+        flag_key_fast = 1;
+    }
+    else {
+        flag_key_fast = 0;
+    }
 }
 
 // gpio引脚默认上拉
@@ -796,7 +806,7 @@ void ips114_show(void)
 // //  ips114_showuint8(50, 7, count_flag_4);
 //     ips114_showfloat(50, 7, Gyro_offset_z, 4, 2);
     ips114_showstr(0, 7, "j");
-    ips114_showuint8(50, 7, j);
+    ips114_showuint16(50, 7, j);
 
     ips114_showstr(110, 7, "angle");
     ips114_showfloat(150, 7, yaw, 4, 2);

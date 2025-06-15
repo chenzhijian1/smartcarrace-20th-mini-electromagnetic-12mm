@@ -2,14 +2,10 @@
 smartcarrace-20th-mini-electromagnetic/Libraries/*
 
 # 忽略/.vscode文件夹
-.vscode/*
+**/.vscode/
 
-# 忽略Project/.vscode文件夹
-smartcarrace-20th-mini-electromagnetic/Project/.vscode/*
-
-# 忽略Project/MDK/.vscode和Out_File文件夹
-smartcarrace-20th-mini-electromagnetic/Project/MDK/.vscode/*
-smartcarrace-20th-mini-electromagnetic/Project/MDK/Out_File/*
+# 忽略Out_File文件夹
+smartcarrace-20th-mini-electromagnetic/Project/MDK/Out_File/
 
 # 忽略日志文件
 *.log

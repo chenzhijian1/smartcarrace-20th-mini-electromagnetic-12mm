@@ -11,12 +11,13 @@ typedef struct {
 } PathPoint;
 
 // 路径记忆数组
-#define MAX_PATH_POINTS 100
+#define MAX_PATH_POINTS 500
 extern PathPoint path_points[MAX_PATH_POINTS];
-extern uint8 path_point_count;
-extern uint8 j;
-extern uint8 path_point_count_threshold; // 路径点计数阈值调试用
+extern uint16 path_point_count;
+extern uint16 j;
+extern uint16 path_point_count_threshold; // 路径点计数阈值调试用
 extern uint8 flag_isturn;
+extern uint8 flag_end;
 extern uint8 send_flag_nav;
 extern uint8 flag_fast_start;
 
@@ -48,5 +49,8 @@ void fast_tracking(void);
 void speed_select(uint8 f_isturn, float middle, float dis,float angle, float angle_next);
 
 void refresh(void);
+
+extern void read_path(void);
+extern void write_path(void);
 
 #endif /* __NAVIGATION_H__ */
