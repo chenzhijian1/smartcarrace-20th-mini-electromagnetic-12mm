@@ -9,17 +9,30 @@ extern uint8 timing_started;
 
 #define THRESHOLD_JUMP 500 // tof滤波越变值
 // 存储替换量
-float kp_direction_iap = 5;
-float kd_direction_iap = 11;
-float kp_direction_2_iap = 5;
-float kd_direction_2_iap = 11;
-float kp_direction_3_iap = 5;
-float kd_direction_3_iap = 11;
+// float kp_direction_iap = 5;
+// float kd_direction_iap = 11;
+// float kp_direction_2_iap = 5;
+// float kd_direction_2_iap = 11;
+// float kp_direction_3_iap = 5;
+// float kd_direction_3_iap = 11;
+float kpa_iap = 4;
+float kpb_iap = 10;
+float kd_iap = 30;
+float kd_imu_iap = 0;
+float kp_motor_iap = 58;
+float ki_motor_iap = 5.5;
+
 float normal_speed_iap = 140;
 float block_speed_iap = 100;
 float hightv_huandao_iap = 170;
 float lowv_huandao_iap = 75;
 float max_speed_iap = 230;
+
+float speed_high_iap = 320;
+float speed_low_iap = 230;
+float speed_turn_iap = 160;
+float speed_adjust_iap = 200;
+
 float block_judge_iap = 600;
 float block_out_encode_iap = 150;
 float block_back_encode_iap = 250;
@@ -125,7 +138,7 @@ void DataInit() // eeprom初始化数据
     iap_init(); // eeprom初始化
 //	iap_erase_page(0xff) ;
 //	extern_iap_write_float(kp_direction, 3, 1, 0x07);   // kp_direction
-//    extern_iap_write_float(kd_direction, 3, 1, 0x10);  // kd_direction
+//  extern_iap_write_float(kd_direction, 3, 1, 0x10);  // kd_direction
 //	extern_iap_write_float(kp_direction_2, 3, 1, 0x90);
 //	extern_iap_write_float(kd_direction_2, 3, 1, 0xa0);
 //	extern_iap_write_float(kp_direction_3, 3, 1, 0xa6);
@@ -142,27 +155,31 @@ void DataInit() // eeprom初始化数据
 //	  extern_iap_write_float(block_back_angle, 3, 1, 0xd7);
     
 
-    kp_direction = iap_read_float(7, 0x07);
-    kd_direction = iap_read_float(7, 0x10);
-    kp_direction_2 = iap_read_float(7, 0x90);
-    kd_direction_2 = iap_read_float(7, 0xa0);
-    kp_direction_3 = iap_read_float(7, 0xa6);
-    kd_direction_3 = iap_read_float(7, 0xb0);
-    block_speed = iap_read_float(7, 0x17);
-	
-	huandao_hight_speed [0]= iap_read_float(7, 0x20);
-	huandao_low_speed [0]= iap_read_float(7, 0x27);
-// hightv_huandao = iap_read_float(7, 0x20);
-//lowv_huandao = iap_read_float(7, 0x27);
-    max_speed = iap_read_float(7, 0x30);
+    kpa = iap_read_float(7, 0x07);
+    kpb = iap_read_float(7, 0x10);
+    kd = iap_read_float(7, 0x90);
+    kd_imu = iap_read_float(7, 0xa0);
+    kp_motor = iap_read_float(7, 0xa6);
+    ki_motor = iap_read_float(7, 0xb0);
+
+//     block_speed = iap_read_float(7, 0x17);
+// 	huandao_hight_speed [0]= iap_read_float(7, 0x20);
+// 	huandao_low_speed [0]= iap_read_float(7, 0x27);
+// // hightv_huandao = iap_read_float(7, 0x20);
+// //lowv_huandao = iap_read_float(7, 0x27);
+//     max_speed = iap_read_float(7, 0x30);
+    
+    speed_high = iap_read_float(7, 0x17);
+    speed_low = iap_read_float(7, 0x20);
+    speed_turn = iap_read_float(7, 0x27);
+    speed_adjust = iap_read_float(7, 0x30);
+    normal_speed = iap_read_float(7, 0x65);
+
     block_judge = iap_read_float(7, 0x50);
     block_out_encode = iap_read_float(7, 0x56);
     block_back_encode = iap_read_float(7, 0x80);
-    normal_speed = iap_read_float(7, 0x65);
     block_out_angle = iap_read_float(7, 0xd0);
     block_back_angle = iap_read_float(7, 0xd7);
-
-    // test_speed = 40; // 速度设定
 }
 
 // gpio引脚默认上拉
@@ -187,23 +204,23 @@ unsigned char xdata ui_page0[8][30] =
 
 unsigned char xdata ui_page1[8][30] =
     {
-        "  <dir_loop>          <page1>",
-        "  kp_direction",
-        "  kd_direction",
-        "  kp_direction_2",
-        "  kd_direction_2",
-        "  kp_direction_3",
-        "  kd_direction_3",
+        "  <pid>               <page1>",
+        "  kpa",
+        "  kpb",
+        "  kd",
+        "  kd_imu",
+        "  kp_motor",
+        "  ki_motor",
         "  <EXIT>---------------------"};
 
 unsigned char xdata ui_page2[8][30] =
     {
         "  <speed_change>      <page2>",
         "  normal_speed",
-        "  block_speed",
-        "hightV_huandao_0",
-        "lowV_huandao_0",
-        "  max_speed",
+        "  speed_high",
+        "  speed_low",
+        "  speed_turn",
+        "  speed_adjust",
         "",
         "  <EXIT>---------------------"};
 
@@ -284,12 +301,12 @@ void ui_display(void)
             UI_DispUIStrings(ui_page1);
 
             //
-            ips114_showfloat(150, 1, kp_direction, 2, 2);
-            ips114_showfloat(150, 2, kd_direction, 2, 2);
-            ips114_showfloat(150, 3, kp_direction_2, 2, 2);
-            ips114_showfloat(150, 4, kd_direction_2, 2, 2);
-            ips114_showfloat(150, 5, kp_direction_3, 2, 2);
-            ips114_showfloat(150, 6, kd_direction_3, 2, 2);
+            ips114_showfloat(150, 1, kpa, 2, 2);
+            ips114_showfloat(150, 2, kpb, 2, 2);
+            ips114_showfloat(150, 3, kd, 2, 2);
+            ips114_showfloat(150, 4, kd_imu, 2, 2);
+            ips114_showfloat(150, 5, kp_motor, 2, 2);
+            ips114_showfloat(150, 6, ki_motor, 2, 2);
             //
         }
         else if (ui.last != ui.page)
@@ -300,12 +317,12 @@ void ui_display(void)
             UI_DispUIStrings(ui_page1);
 
             //
-            ips114_showfloat(150, 1, kp_direction, 2, 2);
-            ips114_showfloat(150, 2, kd_direction, 2, 2);
-            ips114_showfloat(150, 3, kp_direction_2, 2, 2);
-            ips114_showfloat(150, 4, kd_direction_2, 2, 2);
-            ips114_showfloat(150, 5, kp_direction_3, 2, 2);
-            ips114_showfloat(150, 6, kd_direction_3, 2, 2);
+            ips114_showfloat(150, 1, kpa, 2, 2);
+            ips114_showfloat(150, 2, kpb, 2, 2);
+            ips114_showfloat(150, 3, kd, 2, 2);
+            ips114_showfloat(150, 4, kd_imu, 2, 2);
+            ips114_showfloat(150, 5, kp_motor, 2, 2);
+            ips114_showfloat(150, 6, ki_motor, 2, 2);
             //
         }
         break;
@@ -316,10 +333,10 @@ void ui_display(void)
 
             //
             ips114_showfloat(150, 1, normal_speed, 3, 2);
-            ips114_showfloat(150, 2, block_speed, 3, 2);
-            ips114_showfloat(150, 3, huandao_hight_speed[0], 3, 2);
-             ips114_showfloat(150, 4, huandao_low_speed[0], 3, 2);
-            ips114_showfloat(150, 5, max_speed, 3, 2);
+            ips114_showfloat(150, 2, speed_high, 3, 2);
+            ips114_showfloat(150, 3, speed_low, 3, 2);
+            ips114_showfloat(150, 4, speed_turn, 3, 2);
+            ips114_showfloat(150, 5, speed_adjust, 3, 2);
             //
         }
         else if (ui.last != ui.page)
@@ -331,10 +348,10 @@ void ui_display(void)
 
             //
             ips114_showfloat(150, 1, normal_speed, 3, 2);
-            ips114_showfloat(150, 2, block_speed, 3, 2);
-            ips114_showfloat(150, 3, huandao_hight_speed[0], 3, 2);
-            ips114_showfloat(150, 4, huandao_low_speed[0], 3, 2);
-            ips114_showfloat(150, 5, max_speed, 3, 2);
+            ips114_showfloat(150, 2, speed_high, 3, 2);
+            ips114_showfloat(150, 3, speed_low, 3, 2);
+            ips114_showfloat(150, 4, speed_turn, 3, 2);
+            ips114_showfloat(150, 5, speed_adjust, 3, 2);
             //
         }
         break;
@@ -450,37 +467,53 @@ void key_scan(void)
             {
                 ui.page = 4;
 
-                kp_direction_iap = kp_direction;
-                kd_direction_iap = kd_direction;
-                kp_direction_2_iap = kp_direction_2;
-                kd_direction_2_iap = kd_direction_2;
-                kp_direction_3_iap = kp_direction_3;
-                kd_direction_3_iap = kd_direction_3;
+                // kp_direction_iap = kp_direction;
+                // kd_direction_iap = kd_direction;
+                // kp_direction_2_iap = kp_direction_2;
+                // kd_direction_2_iap = kd_direction_2;
+                // kp_direction_3_iap = kp_direction_3;
+                // kd_direction_3_iap = kd_direction_3;
+                kpa_iap = kpa;
+                kpb_iap = kpb;
+                kd_iap = kd;
+                kd_imu_iap = kd_imu;
+                kp_motor_iap = kp_motor;
+                ki_motor_iap = ki_motor;
+
                 normal_speed_iap = normal_speed;
-                block_speed_iap = block_speed;
-                 hightv_huandao_iap = huandao_hight_speed[0];
-                 lowv_huandao_iap = huandao_low_speed[0];
-                max_speed_iap = max_speed;
+
+                // 标记：可以用来换成navigation.c速度规划的四个速度
+                // block_speed_iap = block_speed;
+                // hightv_huandao_iap = huandao_hight_speed[0];
+                // lowv_huandao_iap = huandao_low_speed[0];
+                // max_speed_iap = max_speed;
+                speed_high_iap = speed_high;
+                speed_low_iap = speed_low;
+                speed_turn_iap = speed_turn;
+                speed_adjust_iap = speed_adjust;
+
                 block_judge_iap = block_judge;
                 block_out_encode_iap = block_out_encode;
                 block_back_encode_iap = block_back_encode;
                 block_out_angle_iap = block_out_angle;
                 block_back_angle_iap = block_back_angle;
 
-                extern_iap_write_float(kp_direction_iap, 3, 1, 0x07);
-                extern_iap_write_float(kd_direction_iap, 3, 1, 0x10);
-                extern_iap_write_float(kp_direction_2_iap, 3, 1, 0x90);
-                extern_iap_write_float(kd_direction_2_iap, 3, 1, 0xa0);
-                extern_iap_write_float(kp_direction_3_iap, 3, 1, 0xa6);
-                extern_iap_write_float(kd_direction_3_iap, 3, 1, 0xb0);
-                extern_iap_write_float(block_speed_iap, 3, 1, 0x17);
-                extern_iap_write_float(hightv_huandao_iap, 3, 1, 0x20);
-                extern_iap_write_float(lowv_huandao_iap, 3, 1, 0x27);
-                extern_iap_write_float(max_speed_iap, 3, 1, 0x30);
+                extern_iap_write_float(kpa_iap, 3, 1, 0x07);
+                extern_iap_write_float(kpb_iap, 3, 1, 0x10);
+                extern_iap_write_float(kd_iap, 3, 1, 0x90);
+                extern_iap_write_float(kd_imu_iap, 3, 1, 0xa0);
+                extern_iap_write_float(kp_motor_iap, 3, 1, 0xa6);
+                extern_iap_write_float(ki_motor_iap, 3, 1, 0xb0);
+
+                extern_iap_write_float(speed_high_iap, 3, 1, 0x17);
+                extern_iap_write_float(speed_low_iap, 3, 1, 0x20);
+                extern_iap_write_float(speed_turn_iap, 3, 1, 0x27);
+                extern_iap_write_float(speed_adjust_iap, 3, 1, 0x30);
+                extern_iap_write_float(normal_speed_iap, 3, 1, 0x65);
+
                 extern_iap_write_float(block_judge_iap, 3, 1, 0x50);
                 extern_iap_write_float(block_out_encode_iap, 3, 1, 0x56);
                 extern_iap_write_float(block_back_encode_iap, 3, 1, 0x80);
-                extern_iap_write_float(normal_speed_iap, 3, 1, 0x65);
                 extern_iap_write_float(block_out_angle_iap, 3, 1, 0xd0);
                 extern_iap_write_float(block_back_angle_iap, 3, 1, 0xd7);
             }
@@ -489,27 +522,27 @@ void key_scan(void)
         case 1:
             if (ui.cursor == 1)
             {
-                kp_direction += 0.5f;
+                kpa += 0.5f;
             }
             else if (ui.cursor == 2)
             {
-                kd_direction += 0.5f;
+                kpb += 1.0f;
             }
             else if (ui.cursor == 3)
             {
-                kp_direction_2 += 0.5f;
+                kd += 1.0f;
             }
             else if (ui.cursor == 4)
             {
-                kd_direction_2 += 0.5f;
+                kd_imu += 0.5f;
             }
             else if (ui.cursor == 5)
             {
-                kp_direction_3 += 0.5f;
+                kp_motor += 1.0f;
             }
             else if (ui.cursor == 6)
             {
-                kd_direction_3 += 0.5f;
+                ki_motor += 0.1f;
             }
             else if (ui.cursor == 7)
             {
@@ -519,23 +552,23 @@ void key_scan(void)
         case 2:
             if (ui.cursor == 1)
             {
-                normal_speed += 2;
+                normal_speed += 5;
             }
             else if (ui.cursor == 2)
             {
-                block_speed += 2;
+                speed_high += 5;
             }
             else if (ui.cursor == 3) 
             {
-                huandao_hight_speed[0] += 2;
+                speed_low += 5;
             }
             else if (ui.cursor == 4)
             {
-                huandao_low_speed[0] += 2;
+                speed_turn += 5;
             }
             else if (ui.cursor == 5)
             {
-                max_speed += 2;
+                speed_adjust += 5;
             }
             else if (ui.cursor == 7)
             {
@@ -595,27 +628,27 @@ void key_scan(void)
         case 1:
             if (ui.cursor == 1)
             {
-                kp_direction -= 0.5f;
+                kpa -= 0.5f;
             }
             else if (ui.cursor == 2)
             {
-                kd_direction -= 0.5f;
+                kpb -= 1.0f;
             }
             else if (ui.cursor == 3)
             {
-                kp_direction_2 -= 0.5f;
+                kd -= 1.0f;
             }
             else if (ui.cursor == 4)
             {
-                kd_direction_2 -= 0.5f;
+                kd_imu -= 0.5f;
             }
             else if (ui.cursor == 5)
             {
-                kp_direction_3 -= 0.5f;
+                kp_motor -= 1.0f;
             }
             else if (ui.cursor == 6)
             {
-                kd_direction_3 -= 0.5f;
+                ki_motor -= 0.1f;
             }
             else if (ui.cursor == 7)
             {
@@ -625,23 +658,23 @@ void key_scan(void)
         case 2:
             if (ui.cursor == 1)
             {
-                normal_speed -= 2;
+                normal_speed -= 5;
             }
             else if (ui.cursor == 2)
             {
-                block_speed -= 2;
+                speed_high -= 5;
             }
             else if (ui.cursor == 3)
             {
-                huandao_hight_speed[0] -= 2;
+                speed_low -= 5;
             }
             else if (ui.cursor == 4)
             {
-               huandao_low_speed[0] -= 2;
+                speed_turn -= 5;
             }
             else if (ui.cursor == 5)
             {
-                max_speed -= 2;
+                speed_adjust -= 5;
             }
             else if (ui.cursor == 7)
             {

@@ -35,9 +35,10 @@ extern uint8 a;
 #define distance_min 15 * distance_ratio  // 最小路径点距离，用于筛除很短的路径点
 #define distance_ratio 134 / 30  // 编码器计数值与实际距离的比例系数(计数值/实际距离cm)
 
-#define speed_high 320
-#define speed_low 230
-#define speed_turn 160
+extern float speed_high;
+extern float speed_low;
+extern float speed_turn;
+extern float speed_adjust;
 
 // 函数声明
 void Path_record(void);

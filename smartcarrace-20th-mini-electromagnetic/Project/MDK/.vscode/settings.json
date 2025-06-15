@@ -4,6 +4,7 @@
         "my_peripheral.h": "c",
         "pid.h": "c",
         "inductance.h": "c",
-        "seekfree_printf.h": "c"
+        "seekfree_printf.h": "c",
+        "headfile.h": "c"
     }
 }

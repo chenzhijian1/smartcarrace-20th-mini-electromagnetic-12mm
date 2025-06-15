@@ -10,6 +10,11 @@ uint8 flag_end = 0; // 0表示未到达终点,1表示到达终点
 uint8 send_flag_nav = 0;
 uint8 flag_fast_start = 0;
 
+float speed_high = 320;
+float speed_low = 230;
+float speed_turn = 160;
+float speed_adjust = 200;
+
 uint8 a = 0;
 
 void Path_record(void)
