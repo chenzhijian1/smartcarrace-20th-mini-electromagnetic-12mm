@@ -1,0 +1,367 @@
+C251 COMPILER V5.60.0,  isr                                                                10/06/25  05:13:46  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE isr
+OBJECT MODULE PLACED IN .\Out_File\isr.obj
+COMPILER INVOKED BY: F:\keil5\C251\BIN\C251.EXE ..\USER\src\isr.c LARGE INTR2 WARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE I
+                    -NCDIR(..\..\Libraries\libraries;..\..\Libraries\seekfree_libraries;..\..\Libraries\seekfree_peripheral;..\CODE;..\USER\i
+                    -nc;..\USER\src;..\..\Libraries\seekfree_components) DEBUG PRINT(.\Out_File\isr.lst) OBJECT(.\Out_File\isr.obj) 
+
+stmt  level    source
+
+    1          #include "headfile.h"
+    2          #define LED P52
+    3          #define TOF_DISTANCE 700
+    4          
+    5          extern uint8 send_flag;
+    6          uint32 timer_cnt = 0;
+    7          uint8 timing_started_start = 0;
+    8          uint16 voltage;
+    9          
+   10          void TM0_Isr() interrupt 1
+   11          {
+   12   1              
+   13   1      }
+   14          void TM1_Isr() interrupt 3
+   15          {
+   16   1              send_flag = 1;
+   17   1          // 电感读取及数???处理
+   18   1          direction_adc_get();
+   19   1          encoder_get();
+   20   1          encoder();
+   21   1      
+   22   1          pit_callback(); // 陀螺仪
+   23   1          angle_gyro();
+   24   1      }
+   25          void TM2_Isr() interrupt 12
+   26          {
+   27   1          
+   28   1          // TIM2_CLEAR_FLAG; // 清除??????标志  
+   29   1      }
+   30          void TM3_Isr() interrupt 19
+   31          {
+   32   1          // 右编码器
+   33   1          TIM3_CLEAR_FLAG; // 清除??????标志
+   34   1      }
+   35          
+   36          void TM4_Isr() interrupt 20
+   37          {
+   38   1          TIM4_CLEAR_FLAG; // 清除??????标志
+   39   1          if (timing_started_start)  timer_cnt++;
+   40   1          // 编码器获得速度???
+   41   1      //      count_tof +=1; 
+   42   1      //      if(count_tof == 7 && (count_flag_4 ==0 || count_flag_4 == 1) )  //过完障???和坡道后不在判断tof
+   43   1      //      {               
+   44   1      //              count_tof =0;
+   45   1      //              //block_judgement();
+   46   1      //      }
+   47   1              voltage = read_voltage();
+   48   1      
+   49   1              // if (normal_speed != 0) {
+   50   1                      speed_change();
+   51   1              // }
+   52   1              if (flag_key_control)  motor_control(set_leftspeed, set_rightspeed);
+   53   1          else  motor_control(0, 0);
+   54   1      }
+   55          
+   56          // UART1??????
+   57          void UART1_Isr() interrupt 4
+C251 COMPILER V5.60.0,  isr                                                                10/06/25  05:13:46  PAGE 2   
+
+   58          {
+   59   1          uint8 res;
+   60   1          static uint8 dwon_count;
+   61   1          if (UART1_GET_TX_FLAG)
+   62   1          {
+   63   2              UART1_CLEAR_TX_FLAG;
+   64   2              busy[1] = 0;
+   65   2          }
+   66   1          if (UART1_GET_RX_FLAG)
+   67   1          {
+   68   2              UART1_CLEAR_RX_FLAG;
+   69   2              res = SBUF;
+   70   2              // 程序???动下???
+   71   2              if (res == 0x7F)
+   72   2              {
+   73   3                  if (dwon_count++ > 20)
+   74   3                      IAP_CONTR = 0x60;
+   75   3              }
+   76   2              else
+   77   2              {
+   78   3                  dwon_count = 0;
+   79   3              }
+   80   2          }
+   81   1      }
+   82          
+   83          // UART2??????
+   84          void UART2_Isr() interrupt 8
+   85          {
+   86   1          if (UART2_GET_TX_FLAG)
+   87   1          {
+   88   2              UART2_CLEAR_TX_FLAG;
+   89   2              busy[2] = 0;
+   90   2          }
+   91   1          if (UART2_GET_RX_FLAG)
+   92   1          {
+   93   2              UART2_CLEAR_RX_FLAG;
+   94   2              // 接收数据寄存器为：S2BUF
+   95   2          }
+   96   1      }
+   97          
+   98          // UART3??????
+   99          void UART3_Isr() interrupt 17
+  100          {
+  101   1          if (UART3_GET_TX_FLAG)
+  102   1          {
+  103   2              UART3_CLEAR_TX_FLAG;
+  104   2              busy[3] = 0;
+  105   2          }
+  106   1          if (UART3_GET_RX_FLAG)
+  107   1          {
+  108   2              UART3_CLEAR_RX_FLAG;
+  109   2              // 接收数据寄存器为：S3BUF
+  110   2          }
+  111   1      }
+  112          
+  113          #include "isr.h"
+  114          #include <string.h>
+  115          
+  116          // 定义接收缓冲???
+  117          uint8 uart_buf[50];
+  118          uint8 uart_buf_index = 0;
+  119          uint8 receive_data;
+  120          uint8 i;
+  121          float receive_values[9];
+  122          
+  123          float string_to_float(const char *str) {
+C251 COMPILER V5.60.0,  isr                                                                10/06/25  05:13:46  PAGE 3   
+
+  124   1          float result = 0.0f;
+  125   1          float sign = 1.0f;
+  126   1          int decimal_place = 0;
+  127   1          int is_fraction = 0;
+  128   1      
+  129   1          // 处理符号
+  130   1          if (*str == '-') {
+  131   2              sign = -1.0f;
+  132   2              str++;
+  133   2          } else if (*str == '+') {
+  134   2              str++;
+  135   2          }
+  136   1      
+  137   1          // 逐字符处理
+  138   1          while (*str) {
+  139   2              if (*str == '.') {
+  140   3                  is_fraction = 1;
+  141   3                  str++;
+  142   3                  continue;
+  143   3              }
+  144   2              if (*str < '0' || *str > '9') {
+  145   3                  break; // 非法字符
+  146   3              }
+  147   2              if (is_fraction) {
+  148   3                  decimal_place++;
+  149   3              }
+  150   2              result = result * 10.0f + (*str - '0');
+  151   2              str++;
+  152   2          }
+  153   1              
+  154   1          // 处理小数部分
+  155   1          for (i = 0; i < decimal_place; i++) {
+  156   2              result /= 10.0f;
+  157   2          }
+  158   1      
+  159   1          return result * sign;
+  160   1      }
+  161          
+  162          // 串口4??????接收函数
+  163          void UART4_Isr() interrupt 18
+  164          {
+  165   1          if (UART4_GET_TX_FLAG)
+  166   1          {
+  167   2              UART4_CLEAR_TX_FLAG;
+  168   2              busy[4] = 0;
+  169   2          }
+  170   1          if (UART4_GET_RX_FLAG)
+  171   1          {
+  172   2              UART4_CLEAR_RX_FLAG;
+  173   2                      
+  174   2      //              if(wireless_type == WIRELESS_SI24R1)
+  175   2      //        {
+  176   2      //            wireless_uart_callback();           //无线模块串口回调函数
+  177   2      //        }
+  178   2      //        else if(wireless_type == WIRELESS_CH9141)
+  179   2      //        {
+  180   2      //            bluetooth_ch9141_uart_callback();   //蓝牙模块串口回调函数
+  181   2      //        }
+  182   2      //        else if(wireless_type == WIRELESS_CH573)
+  183   2      //        {
+  184   2      //            wireless_ch573_callback();          //CH573无线模块回调函数
+  185   2      //        }
+  186   2              receive_data = S4BUF;  // 使用S4BUF接收数据
+  187   2              
+  188   2              // 存储接收到的数据
+  189   2              if (receive_data == '\n' || receive_data == '\r')  // 接收到换行符或回车符，表示一帧数据接收完成
+C251 COMPILER V5.60.0,  isr                                                                10/06/25  05:13:46  PAGE 4   
+
+  190   2              {
+  191   3                  uart_buf[uart_buf_index] = '\0';  // 添加字符串结束符
+  192   3                  // 解析接收到的数据
+  193   3                  if (uart_buf_index >= 2)  // 至少需要一个字母和一个数字
+  194   3                  {
+  195   4                      char param_type = uart_buf[0];  // 获取参数类型
+  196   4                      float value = string_to_float(uart_buf + 1);  // 替换数值部分
+  197   4                      
+  198   4                      // 根据参数类型更新相应的??
+  199   4                      switch(param_type)
+  200   4                      {
+  201   5      //                    case 'P':  // PD组的kp
+  202   5      //                        kp_direction = value;
+  203   5      //                        break;
+  204   5      //                    case 'D':  // PD组的kd
+  205   5      //                        kd_direction = value;
+  206   5      //                        break;
+  207   5      //                    case 'Q':  // QE组的kp
+  208   5      //                        kp_direction_2 = value;
+  209   5      //                        break;
+  210   5      //                    case 'E':  // QE组的kd
+  211   5      //                        kd_direction_2 = value;
+  212   5      //                        break;
+  213   5      //                    case 'R':  // RF组的kp
+  214   5      //                        kp_direction_3 = value;
+  215   5      //                        break;
+  216   5      //                    case 'F':  // RF组的kd
+  217   5      //                        kd_direction_3 = value;
+  218   5      //                        break;
+  219   5                                              case 'a':
+  220   5                                                      kpa = value;
+  221   5                                                      break;
+  222   5                                              case 'b':
+  223   5                                                      kpb = value;
+  224   5                                                      break;
+  225   5                                              case 'd':
+  226   5                                                      kd = value;
+  227   5                                                      break;
+  228   5                                              case 'D':
+  229   5                                                      kd_imu = value;
+  230   5                                                      break;
+  231   5                          case 'p':  // pid组的kp
+  232   5                              kp_motor = value;
+  233   5                                                      motor_left.Kp_motor = kp_motor;
+  234   5                                                      motor_right.Kp_motor = kp_motor;
+  235   5                              break;
+  236   5                          case 'i':  // pid组的ki
+  237   5                              ki_motor = value;
+  238   5                                                      motor_left.Ki_motor = ki_motor;
+  239   5                                                      motor_right.Ki_motor = ki_motor;
+  240   5                              break;
+  241   5      //                    case 'd':  // pid组的kd
+  242   5      //                        kd_motor = value;
+  243   5      //                                              motor_left.Kd_motor = kd_motor;
+  244   5      //                                              motor_right.Kd_motor = kd_motor;
+  245   5      //                        break;
+  246   5      //                    case 't':  // 速度
+  247   5      //                        test_speed = value;
+  248   5      //                        break;
+  249   5                                              case 'n':
+  250   5                                                      normal_speed = value;
+  251   5                                                      break;
+  252   5                                              case 's':
+  253   5                                                      s = value;
+  254   5                                                      break;
+  255   5                                              case 'A':
+C251 COMPILER V5.60.0,  isr                                                                10/06/25  05:13:46  PAGE 5   
+
+  256   5                                                      A_ = value;
+  257   5                                                      break;
+  258   5                                              case 'B':
+  259   5                                                      B_ = value;
+  260   5                                                      break;
+  261   5                                              case 'C':
+  262   5                                                      C_ = value;
+  263   5                                                      break;
+  264   5                          case 'm':
+  265   5                              path_point_count_threshold = value;
+  266   5                              break;
+  267   5                      }
+  268   4                  }
+  269   3                  
+  270   3                  uart_buf_index = 0;  // 重置缓冲区索引
+  271   3              }
+  272   2              else if (uart_buf_index < 199)  // 确保不会溢出
+  273   2              {
+  274   3                  uart_buf[uart_buf_index++] = receive_data;
+  275   3              }
+  276   2          }
+  277   1      }
+  278          
+  279          void INT0_Isr() interrupt 0
+  280          {
+  281   1          LED = 0; // 点亮LED
+  282   1      }
+  283          void INT1_Isr() interrupt 2
+  284          {
+  285   1      }
+  286          void INT2_Isr() interrupt 10
+  287          {
+  288   1          INT2_CLEAR_FLAG; // 清除??????标志
+  289   1      }
+  290          void INT3_Isr() interrupt 11
+  291          {
+  292   1          INT3_CLEAR_FLAG; // 清除??????标志
+  293   1      }
+  294          
+  295          void INT4_Isr() interrupt 16
+  296          {
+  297   1          INT4_CLEAR_FLAG; // 清除??????标志
+  298   1      }
+  299          
+  300          // void  INT0_Isr()  interrupt 0;
+  301          // void  TM0_Isr()   interrupt 1;
+  302          // void  INT1_Isr()  interrupt 2;
+  303          // void  TM1_Isr()   interrupt 3;
+  304          // void  UART1_Isr() interrupt 4;
+  305          // void  ADC_Isr()   interrupt 5;
+  306          // void  LVD_Isr()   interrupt 6;
+  307          // void  PCA_Isr()   interrupt 7;
+  308          // void  UART2_Isr() interrupt 8;
+  309          // void  SPI_Isr()   interrupt 9;
+  310          // void  INT2_Isr()  interrupt 10;
+  311          // void  INT3_Isr()  interrupt 11;
+  312          // void  TM2_Isr()   interrupt 12;
+  313          // void  INT4_Isr()  interrupt 16;
+  314          // void  UART3_Isr() interrupt 17;
+  315          // void  UART4_Isr() interrupt 18;
+  316          // void  TM3_Isr()   interrupt 19;
+  317          // void  TM4_Isr()   interrupt 20;
+  318          // void  CMP_Isr()   interrupt 21;
+  319          // void  I2C_Isr()   interrupt 24;
+  320          // void  USB_Isr()   interrupt 25;
+  321          // void  PWM1_Isr()  interrupt 26;
+C251 COMPILER V5.60.0,  isr                                                                10/06/25  05:13:46  PAGE 6   
+
+  322          // void  PWM2_Isr()  interrupt 27;
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      1617     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       119     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        21     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

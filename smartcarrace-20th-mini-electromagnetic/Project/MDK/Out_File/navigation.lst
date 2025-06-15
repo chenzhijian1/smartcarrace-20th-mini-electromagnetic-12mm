@@ -1,0 +1,172 @@
+C251 COMPILER V5.60.0,  navigation                                                         10/06/25  05:13:48  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE navigation
+OBJECT MODULE PLACED IN .\Out_File\navigation.obj
+COMPILER INVOKED BY: F:\keil5\C251\BIN\C251.EXE navigation.c LARGE INTR2 WARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR
+                    -(..\..\Libraries\libraries;..\..\Libraries\seekfree_libraries;..\..\Libraries\seekfree_peripheral;..\CODE;..\USER\inc;..
+                    -\USER\src;..\..\Libraries\seekfree_components) DEBUG PRINT(.\Out_File\navigation.lst) OBJECT(.\Out_File\navigation.obj) 
+
+stmt  level    source
+
+    1          #include "headfile.h"
+    2          
+    3          PathPoint path_points[MAX_PATH_POINTS] = {0};
+    4          
+    5          uint8 path_point_count = 0; // 第一个点为起点已经初始化为0,0
+    6          uint8 j = 1; // 用于移动路径点的索引
+    7          uint8 path_point_count_threshold = 100; // 路径点阈值
+    8          uint8 flag_isturn = 0; // 0表示上一段是直道,1表示上一段是弯道
+    9          uint8 flag_end = 0; // 0表示未到达终点,1表示到达终点
+   10          uint8 send_flag_nav = 0;
+   11          uint8 flag_fast_start = 0;
+   12          
+   13          uint8 a = 0;
+   14          
+   15          void Path_record(void)
+   16          {
+   17   1          // 判断是否需要记录路径点 (角速度超过阈值)
+   18   1          if (flag_isturn == 0) {
+   19   2              if ((path_point_count < MAX_PATH_POINTS - 1) && (abs(imu660ra_gyro_z) / 16.4f > gyro_threshold_hi
+             -gh)
+   20   2                   && fabs(yaw) >= angle_turn && encoder_ave > distance_min && fabs(aaddcc.err_dir) <= err_stra
+             -ight) {
+   21   3                  Point_record();
+   22   3              }
+   23   2          }
+   24   1          else {
+   25   2              if ((path_point_count < MAX_PATH_POINTS - 1) && (abs(imu660ra_gyro_z) / 16.4f < gyro_threshold_lo
+             -w)
+   26   2                   && encoder_ave > distance_min && fabs(aaddcc.err_dir) >= err_turn) {
+   27   3                  Point_record();
+   28   3              }
+   29   2          }
+   30   1      
+   31   1          // 调试用 记录路径点达到阈值时停止记录
+   32   1          // if (path_point_count >= path_point_count_threshold) {
+   33   1          //     flag = 4;
+   34   1          //     set_leftspeed = 0;
+   35   1          //     set_rightspeed = 0;
+   36   1          //     normal_speed = 0;
+   37   1          // }
+   38   1      }
+   39          
+   40          void Point_record(void)
+   41          {
+   42   1          path_point_count++;
+   43   1          path_points[path_point_count].distance = encoder_ave;
+   44   1          path_points[path_point_count].yaw_relative = yaw;
+   45   1          path_points[path_point_count].isturn = flag_isturn;
+   46   1      
+   47   1          send_flag_nav = 1;
+   48   1      
+   49   1          // refresh();
+   50   1          flag_isturn = !flag_isturn;
+   51   1      }
+   52          
+   53          // 快速循迹函数 (第二圈使用)
+   54          void fast_tracking(void)
+C251 COMPILER V5.60.0,  navigation                                                         10/06/25  05:13:48  PAGE 2   
+
+   55          {
+   56   1          // if (flag_fast_start == 0) {
+   57   1          //     flag_fast_start = 1;
+   58   1          //     refresh();
+   59   1          //     delay_ms(3000);
+   60   1          // }
+   61   1          // a = 1;
+   62   1          if (j + 1 < path_point_count) {
+   63   2              if (encoder_ave >= path_points[j].distance) {
+   64   3                  // 移动到下一个路径点
+   65   3                  j++;
+   66   3                  // refresh();
+   67   3              }
+   68   2              speed_select(path_points[j].isturn, (path_points[j-1].distance + path_points[j].distance) / 2,
+   69   2                           path_points[j].distance - path_points[j-1].distance, path_points[j].yaw_relative, pa
+             -th_points[j + 1].yaw_relative);
+   70   2          }
+   71   1          else {
+   72   2              if (flag_end == 0) { // 第一次到达终点
+   73   3                  if (encoder_ave >= path_points[j].distance) {
+   74   4                      // 移动到下一个路径点
+   75   4                      j = 1;
+   76   4                      flag_end = 1;
+   77   4                      refresh();
+   78   4                  }
+   79   3              }
+   80   2              else {
+   81   3                  flag = 5;
+   82   3              }
+   83   2          }
+   84   1      }
+   85          
+   86          void speed_select(uint8 isturn, float middle, float dis, float angle, float angle_next)
+   87          {
+   88   1          // 仅区分直角
+   89   1          // if (isturn == 1) // 弯道
+   90   1          // {
+   91   1          //     if (fabs(angle) >= 70)  normal_speed = speed_turn;
+   92   1          //     else  normal_speed = speed_low;
+   93   1          // }
+   94   1          // else  normal_speed = speed_high;
+   95   1      
+   96   1          if (isturn == 1) // 弯道
+   97   1          {
+   98   2              if (fabs(angle) >= angle_90)  normal_speed = speed_turn;
+   99   2              else  normal_speed = speed_low;
+  100   2          }
+  101   1          else // 直道
+  102   1          {
+  103   2              if (dis > distance_threshold) {// 直线距离达到50cm以上为长直线
+  104   3                  if (encoder_ave < middle)  normal_speed = speed_high;
+  105   3                  else {
+  106   4                      if (fabs(angle_next) >= angle_90)  normal_speed = speed_turn;
+  107   4                      else  normal_speed = speed_low;
+  108   4                  }
+  109   3              }
+  110   2              else {
+  111   3                  if (fabs(angle_next) >= angle_90)  normal_speed = speed_turn;
+  112   3                  else  normal_speed = speed_low;
+  113   3              }
+  114   2              
+  115   2              // if (fabs(angle_next) >= angle_90)  normal_speed = speed_turn;
+  116   2              // else {
+  117   2              //     if (middle > distance_threshold / 2) {// 直线距离达到50cm以上
+  118   2              //         if (encoder_ave < middle)  normal_speed = speed_high;
+  119   2              //         else  normal_speed = speed_low;
+C251 COMPILER V5.60.0,  navigation                                                         10/06/25  05:13:48  PAGE 3   
+
+  120   2              //     }
+  121   2              // }
+  122   2          }
+  123   1      }
+  124          
+  125          void refresh(void)
+  126          {
+  127   1          encoder_clear();
+  128   1          yaw = 0;
+  129   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      1090     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       925     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       953     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

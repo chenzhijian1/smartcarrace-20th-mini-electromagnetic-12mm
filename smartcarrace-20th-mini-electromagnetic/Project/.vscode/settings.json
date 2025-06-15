@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "pid.h": "c",
+        "my_peripheral.h": "c",
+        "cmath": "c",
+        "my_motor.h": "c",
+        "type_traits": "c",
+        "isr.h": "c"
+    }
+}

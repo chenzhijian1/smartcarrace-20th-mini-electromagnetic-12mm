@@ -1,0 +1,12 @@
+# 忽略Libraries文件夹下的所有文件
+Libraries/*
+
+# 忽略Project/.vscode文件夹
+Project/.vscode/*
+
+# 忽略Project/MDK/.vscode和Out_File文件夹
+Project/MDK/.vscode/*
+Project/MDK/Out_File/*
+
+# 忽略日志文件
+*.log
