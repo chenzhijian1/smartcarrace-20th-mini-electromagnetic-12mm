@@ -1,5 +1,4 @@
 #include "my_motor.h"
-#include "pid.h"
 //******************* 需要调的参数********************/
 // 环岛
 uint8 huandao_directions[4] = {0, 0, 0, 1};      // 0 表示左环岛, 1 表示右环岛
@@ -683,7 +682,7 @@ void dir_pid_sep (float error, float last_error, float gyro) {
     if (fabs(error) <= 20)
         output = kp_direction * error + kd_direction * (error - last_error);
     else if (fabs(error) > 20 && fabs(error) <= 40)
-             output = kp_direction_2 * error + kd_direction_2 * (error - last_error);
+        output = kp_direction_2 * error + kd_direction_2 * (error - last_error);
     else
         output = kp_direction_3 * error + kd_direction_3 * (error - last_error);
 	
@@ -810,12 +809,21 @@ void motor_control(int16 speed_l, int16 speed_r)
 	
 //	motor_left.duty1 = 2000;
 //	motor_right.duty1 = 1000;
-	
-	//motor_left.duty1 += motor_left.out_motor_pid;
-	//motor_right.duty1 += motor_right.out_motor_pid;
 
-    motor_left.duty1 = MINMAX(motor_left.duty1, -10000, 10000);
-    motor_right.duty1 = MINMAX(motor_right.duty1, -10000, 10000);
+	// 电压补偿
+    motor_left.duty1 = motor_left.duty1 * 12.6 / voltage;
+    motor_right.duty1 = motor_right.duty1 * 12.6 / voltage;
+
+    // 限幅
+    if (voltage > 8.0) {
+        int16 limit = (int)(10000 / (voltage / 8.0f));
+        motor_left.duty1 = MINMAX(motor_left.duty1, -limit, limit);
+        motor_right.duty1 = MINMAX(motor_right.duty1, -limit, limit);
+    }
+    else {
+        motor_left.duty1 = MINMAX(motor_left.duty1, -10000, 10000);
+        motor_right.duty1 = MINMAX(motor_right.duty1, -10000, 10000);
+    }
 
     motor_driver_open_out_ir();
 //	motor_driver_open_out_dr();

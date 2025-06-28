@@ -12,3 +12,8 @@ smartcarrace-20th-mini-electromagnetic/Project/MDK/Out_File/
 
 # 忽略配置文件
 *.json
+
+# 忽略工程文件
+smartcarrace-20th-mini-electromagnetic/Project/MDK/SEEKFREE.uvproj
+smartcarrace-20th-mini-electromagnetic/Project/MDK/SEEKFREE.uvopt
+smartcarrace-20th-mini-electromagnetic/Project/MDK/SEEKFREE.uvgui.czj
