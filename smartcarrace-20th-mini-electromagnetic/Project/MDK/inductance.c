@@ -27,10 +27,10 @@ void direction_adc_init(void) // 电感（ADC）初始化
     adc_init(ADC_P00, ADC_SYSclk_DIV_2); //  in1右横
     adc_init(ADC_P01, ADC_SYSclk_DIV_2); // in2右前
 
-   adc_init(ADC_P05, ADC_SYSclk_DIV_2); //  in3左横
+    adc_init(ADC_P05, ADC_SYSclk_DIV_2); //  in3左横
 
     adc_init(ADC_P06, ADC_SYSclk_DIV_2); //  in4左前
-    //adc_init(ADC_P13, ADC_SYSclk_DIV_2); //  in5中
+    adc_init(ADC_P13, ADC_SYSclk_DIV_2); //  in5中横
 	
 	//自己的板子从左到右  00 01 05 06 13
 
@@ -53,17 +53,17 @@ void direction_adc_get(void)
         AD_value[0][i] = adc_once(ADC_P05, ADC_12BIT); // 左横
         AD_value[1][i] = adc_once(ADC_P06, ADC_12BIT); // 左竖
 
-      //  AD_value[2][i] = adc_once(ADC_P13, ADC_12BIT); // 中横电感
+        AD_value[2][i] = adc_once(ADC_P13, ADC_12BIT); // 中横电感
 
         AD_value[3][i] = adc_once(ADC_P00, ADC_12BIT); // 右横
         AD_value[4][i] = adc_once(ADC_P01, ADC_12BIT); // 右竖
-//			 AD_value[0][i] = adc_once(ADC_P13, ADC_12BIT); // 左横
-//        AD_value[1][i] = adc_once(ADC_P06, ADC_12BIT); // 左竖
+	    // AD_value[0][i] = adc_once(ADC_P13, ADC_12BIT); // 左横
+        // AD_value[1][i] = adc_once(ADC_P06, ADC_12BIT); // 左竖
 
-//        AD_value[2][i] = adc_once(ADC_P05, ADC_12BIT); // 中横电感
+        // AD_value[2][i] = adc_once(ADC_P05, ADC_12BIT); // 中横电感
 
-//        AD_value[3][i] = adc_once(ADC_P00, ADC_12BIT); // 右横
-//        AD_value[4][i] = adc_once(ADC_P01, ADC_12BIT); // 右竖
+        // AD_value[3][i] = adc_once(ADC_P00, ADC_12BIT); // 右横
+        // AD_value[4][i] = adc_once(ADC_P01, ADC_12BIT); // 右竖
     }
 
     // 将每一路的5个值进行冒泡排序
@@ -107,55 +107,6 @@ void direction_adc_get(void)
             AD_ONE[i] = 1.0;
         AD_ONE[i] = 100 * AD_ONE[i];
     }
-
-//    // if (middle[0] > 2300 && middle[0] < 3500 && flag == 0 && middle[1] > 2200 && middle[2] > 2200 && middle[0] > middle[1] && middle[1] > middle[2] 
-//	// 	&& (ad_ave[0]>2800||ad_ave[3]>2800) )// 环岛判断
-
-	// 环岛判断
-//    if (flag == 0 && flag1 == 0 && AD_ONE[0] >= 20 && AD_ONE[3] >= 20) { //环岛
-//        encoder_temp = encoder_ave;
-//		
-//		
-//        if (AD_ONE[1] >= AD_ONE[4] * 2 && AD_ONE[1] >= 30) {
-//			flag = 2;
-//			flag1 = 1;  //控制编码器值只记录第一次检测到环岛
-//			flag_huandao = 0;
-//		}
-//        if (AD_ONE[4] >= AD_ONE[1] * 2 && AD_ONE[4] >= 30) {
-//			flag = 2;
-//			flag1 = 1;  //控制编码器值只记录第一次检测到环岛
-//			flag_huandao = 1;
-//		}
-//    }
-    
-//     if (flag == 0 && flag1 == 0 && AD_ONE[0] >= 55)
-//     {
-// //		flag1 = 1;
-// //		if (AD_ONE[0] > AD_ONE_last)  cnt++;
-// //		else  cnt = 0;
-// //		
-// //		if (cnt >= 5) {
-// //			cnt = 0;
-//             flag1 = 1; //控制编码器值只记录第一次检测到环岛
-// 			encoder_temp = encoder_ave;
-// 			flag_huandao = 0; //左环岛
-// 			flag = 2;
-// //		}
-// 		AD_ONE_last = AD_ONE[0];
-//     }
-
-//     if (flag == 0 && flag1 ==0 && AD_ONE[] >= 55) {
-// //		if (AD_ONE[3] > AD_ONE_last)  cnt++;
-// //		else  cnt = 0;
-// //		
-// //		if (cnt >= 5) {
-// //			cnt = 0;
-// 			encoder_temp = encoder_ave;
-// 			flag_huandao = 1; //右环岛
-// 			flag = 2;
-// //		}
-// 		AD_ONE_last = AD_ONE[3];
-//     }
 	
 	// 差比和计算
     aaddcc.last_err_dir = aaddcc.err_dir;

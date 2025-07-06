@@ -22,7 +22,7 @@ float kd_imu_iap = 0;
 float kp_motor_iap = 58;
 float ki_motor_iap = 5.5;
 
-float normal_speed_iap = 140;
+
 float block_speed_iap = 100;
 float hightv_huandao_iap = 170;
 float lowv_huandao_iap = 75;
@@ -32,6 +32,7 @@ float speed_high_iap = 320;
 float speed_low_iap = 230;
 float speed_turn_iap = 160;
 float speed_adjust_iap = 200;
+float normal_speed_iap = 200;
 
 float block_judge_iap = 600;
 float block_out_encode_iap = 150;
@@ -155,12 +156,12 @@ void DataInit() // eeprom初始化数据
 //	  extern_iap_write_float(block_back_angle, 3, 1, 0xd7);
     
 
-    kpa = iap_read_float(7, 0x07);
-    kpb = iap_read_float(7, 0x10);
-    kd = iap_read_float(7, 0x90);
-    kd_imu = iap_read_float(7, 0xa0);
-    kp_motor = iap_read_float(7, 0xa6);
-    ki_motor = iap_read_float(7, 0xb0);
+    kpa = iap_read_float(7, 0x07) > 0 ? iap_read_float(7, 0x07) : kpa_iap;
+    kpb = iap_read_float(7, 0x10) > 0 ? iap_read_float(7, 0x10) : kpb_iap;
+    kd = iap_read_float(7, 0x90) > 0 ? iap_read_float(7, 0x90) : kd_iap;
+    kd_imu = iap_read_float(7, 0xa0) > 0 ? iap_read_float(7, 0xa0) : kd_imu_iap;
+    kp_motor = iap_read_float(7, 0xa6) > 0 ? iap_read_float(7, 0xa6) : kp_motor_iap;
+    ki_motor = iap_read_float(7, 0xb0) > 0 ? iap_read_float(7, 0xb0) : ki_motor_iap;
 
 //     block_speed = iap_read_float(7, 0x17);
 // 	huandao_hight_speed [0]= iap_read_float(7, 0x20);
@@ -169,12 +170,13 @@ void DataInit() // eeprom初始化数据
 // //lowv_huandao = iap_read_float(7, 0x27);
 //     max_speed = iap_read_float(7, 0x30);
     
-    speed_high = iap_read_float(7, 0x17);
-    speed_low = iap_read_float(7, 0x20);
-    speed_turn = iap_read_float(7, 0x27);
-    speed_adjust = iap_read_float(7, 0x30);
-    normal_speed = iap_read_float(7, 0x65);
+    speed_high = iap_read_float(7, 0x17) > 0 ? iap_read_float(7, 0x17) : speed_high_iap;
+    speed_low = iap_read_float(7, 0x20) > 0 ? iap_read_float(7, 0x20) : speed_low_iap;
+    speed_turn = iap_read_float(7, 0x27) > 0 ? iap_read_float(7, 0x27) : speed_turn_iap;
+    speed_adjust = iap_read_float(7, 0x30) > 0 ? iap_read_float(7, 0x30) : speed_adjust_iap;
+    normal_speed = iap_read_float(7, 0x65) > 0 ? iap_read_float(7, 0x65) : normal_speed_iap;
 
+    // 暂时还未更改成环岛中的可调参数，改了也需要跟上面格式一样
     block_judge = iap_read_float(7, 0x50);
     block_out_encode = iap_read_float(7, 0x56);
     block_back_encode = iap_read_float(7, 0x80);
@@ -182,7 +184,7 @@ void DataInit() // eeprom初始化数据
     block_back_angle = iap_read_float(7, 0xd7);
 
     // 有路径点时，读取路径点，并设置 flag_key_fast 为 1 进入快速循迹模式
-    path_point_count = (uint16)iap_read_float(6, 0x200);
+    path_point_count = iap_read_float(6, 0x200) > 0 ?(uint16)iap_read_float(6, 0x200) : 0;
     if (path_point_count != 0) {
         read_path();
         flag_key_fast = 1;
@@ -204,7 +206,7 @@ void DataInit() // eeprom初始化数据
 unsigned char xdata ui_page0[8][30] =
     {
         "  <INCREDIBLE_KING>   <page0>",
-        "  direction_loop",
+        "  pid",
         "  speed_change",
         "  tof_change",
         "",
@@ -739,7 +741,7 @@ void ips114_show(void)
     // ips114_showstr(0, 0, "tof");
     // ips114_showuint16(40, 0, tof[0]); // 显示tof值
     ips114_showstr(0, 0, "n");
-    ips114_showfloat(40, 0, normal_speed, 3, 2); // 显示速度值
+    ips114_showfloat(30, 0, normal_speed, 3, 2); // 显示速度值
 
     ips114_showstr(100, 0, "encoder");
     ips114_showfloat(160, 0, encoder_ave, 5, 1); // 显示encoder值
@@ -754,13 +756,16 @@ void ips114_show(void)
 //    ips114_showuint16(50, 2, ad_ave[3]);  // 显示右横电感原始值
 //    ips114_showuint16(100, 2, ad_ave[4]); // 显示右前电感原始值
     // ips114_showuint16(150, 2, ad_ave[6]);
-    ips114_showstr(0, 1, "left");
-    ips114_showfloat(50, 1, AD_ONE[0], 3, 2);  // 显示左电感归一化值
-    ips114_showfloat(100, 1, AD_ONE[1], 3, 2); // 显示左前电感归一化值
+    ips114_showstr(0, 1, "l");
+    ips114_showfloat(30, 1, AD_ONE[0], 3, 2);  // 显示左电感归一化值
+    ips114_showfloat(80, 1, AD_ONE[1], 3, 2); // 显示左前电感归一化值
 
-    ips114_showstr(0, 2, "right");
-    ips114_showfloat(50, 2, AD_ONE[3], 3, 2);  // 显示右横电感归一化值
-    ips114_showfloat(100, 2, AD_ONE[4], 3, 2); // 显示右前电感归一化值
+    ips114_showstr(140, 1, "m");
+    ips114_showfloat(170, 1, AD_ONE[2], 3, 2);  // 显示中电感归一化值
+
+    ips114_showstr(0, 2, "r");
+    ips114_showfloat(30, 2, AD_ONE[3], 3, 2);  // 显示右横电感归一化值
+    ips114_showfloat(80, 2, AD_ONE[4], 3, 2); // 显示右前电感归一化值
 
 //    ips114_showstr(0, 3, "cnt");
 //    ips114_showuint8(50, 3, cnt_circle_in); 		   // 显示cnt
@@ -780,7 +785,7 @@ void ips114_show(void)
 //    ips114_showuint16(50, 3, flag_circle_out); 		   // 显示flag_huandao
 
     // 显示编码器积分值
-    ips114_showstr(110, 3, "flag_is");
+    ips114_showstr(110, 3, "isturn");
     ips114_showuint8(170, 3, path_points[j].isturn);
 
     // 显示差比和处理后的err值

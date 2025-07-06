@@ -19,12 +19,12 @@ void main(void)
     direction_adc_init(); // 电感     
     motor_driver_init_ir();  // 电机
 //	motor_driver_init_dr();
-    // imu660ra_init();      // 陀螺仪
+    imu660ra_init();      // 陀螺仪
 //	offset_init();        // 零漂
     wireless_uart_init(); // 无线串口
 	voltage_init();       // 电压检测
 	
-	while (voltage < 11500)  voltage = read_voltage();
+	// while (voltage < 11500)  voltage = read_voltage();
 
     pit_timer_ms(TIM_1, 5);  // 电感、陀螺仪、编码器、串口
     pit_timer_ms(TIM_4, 5);  // 电机、电压检测、路径记忆
@@ -39,37 +39,36 @@ void main(void)
     // kd_direction_3 = 90.0f;
 	
     // 新方向环
-    kpa = 4.0f;   // 对应小error
-    kpb = 10.0f;  // 对应大error
-    kd = 30.0f;   //
-	kd_imu = 0.0f;
+//     kpa = 4.0f;   // 对应小error
+//     kpb = 10.0f;  // 对应大error
+//     kd = 30.0f;   //
+// 	kd_imu = 0.0f;
 	
-    kp_motor = 58.0f; //45
-    ki_motor = 5.5f; //3.35
-    kd_motor = 0.0f;
+//     kp_motor = 58.0f; //45
+//     ki_motor = 5.5f; //3.35
+//     kd_motor = 0.0f;
 	
-    normal_speed = 0.0f;    // 运行速度
-    speed_huandao = 150.0f; // 环岛速度
-//	s = 0.27f; // 速度策略系数
-	s = 0.0f;
+//     normal_speed = 0.0f;    // 运行速度
+//     speed_huandao = 150.0f; // 环岛速度
+// //	s = 0.27f; // 速度策略系数
+// 	s = 0.0f;
 	
-    // 电感系数
-	A_ = 1.0f;
-	B_ = 5.0f;
-	C_ = 0.4f;
+//     // 电感系数
+// 	A_ = 1.0f;
+// 	B_ = 5.0f;
+// 	C_ = 0.4f;
 	
     // 使能全局中断
     EA = 1;
     
-    while(1)
-    {
-		if(P75 == 0) // 跑车模式 开关在上
+    while(1) {
+		if(P75 == 0) // 调参模式 开关在上
         {
-            flag_key_control = 1;
+            flag_key_control = 0;
             key_scan();
             ui_display();
         }
-        else // 显示模式 开关在下
+        else // 跑车模式 开关在下
         {
             flag_key_control = 1;
             ips114_show();
@@ -80,7 +79,7 @@ void main(void)
             write_path();
         }
 
-        if (KEY2_PIN == 0) // 切换模式
+        if (KEY2_PIN == 0) // 切换模式  从上往下第二个
         {
             refresh();
             j = 1;
@@ -89,24 +88,24 @@ void main(void)
             timing_started_start = 1;
         }
 
-        if (timer_cnt >= 200) { // 1.5s切换状态
+        if (timer_cnt >= 200) { // 1s切换状态
             flag_key_fast = !flag_key_fast;
-            flag_start = 1; // 开始跑
+            flag_start = 1; // 开始跑，初始逐渐加速
             timing_started_start = 0;
             timer_cnt = 0;
         }
 
-        if (KEY3_PIN == 0) // 重置
+        if (KEY3_PIN == 0) // 重置   从上往下第四个
         {
         	refresh();
             j = 1;
             flag_end = 0;
         }
 
-        if (KEY4_PIN == 0)  flag_stop = !flag_stop;
+        if (KEY4_PIN == 0)  flag_stop = !flag_stop;  // 从上往下第三个
 		
-//  		if (send_flag) {
-//  			send_flag = 0;
+ 		if (send_flag) {
+ 			send_flag = 0;
 //  			printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,",
 //  //					kp_direction, kd_direction,
 //  //					kp_direction_2, kd_direction_2,
@@ -137,6 +136,7 @@ void main(void)
 					
 //  			printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z);
 //  		}
+        }
         if (send_flag_nav && path_point_count < path_point_count_threshold) {
             send_flag_nav = 0;
             printf("%d,%.2f,%.2f,%d,%.2f\r\n", path_point_count, path_points[path_point_count].distance,

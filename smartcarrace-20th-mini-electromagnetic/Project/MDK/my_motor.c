@@ -115,8 +115,8 @@ float gyro_z;
 
 void speed_change()
 {
-    if (flag != 4)
-        car_stop_judge();
+    // if (flag != 4)
+    //     car_stop_judge();
     if (flag_stop == 0)
     {
         if (flag_key_fast == 1)  fast_tracking();

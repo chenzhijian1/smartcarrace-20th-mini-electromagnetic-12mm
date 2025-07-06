@@ -11,8 +11,9 @@ typedef struct {
 } PathPoint;
 
 // 路径记忆数组
-#define MAX_PATH_POINTS 500
+#define MAX_PATH_POINTS 250
 extern PathPoint path_points[MAX_PATH_POINTS];
+
 extern uint16 path_point_count;
 extern uint16 j;
 extern uint16 path_point_count_threshold; // 路径点计数阈值调试用

@@ -217,4 +217,3 @@ void read_path(void) {
         addr += 4;
     }
 }
-
