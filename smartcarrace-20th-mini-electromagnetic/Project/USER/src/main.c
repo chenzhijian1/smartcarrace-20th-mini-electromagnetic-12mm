@@ -19,7 +19,7 @@ void main(void)
     direction_adc_init(); // 电感     
     motor_driver_init_ir();  // 电机
 //	motor_driver_init_dr();
-    imu660ra_init();      // 陀螺仪
+    // imu660ra_init();      // 陀螺仪
 //	offset_init();        // 零漂
     wireless_uart_init(); // 无线串口
 	voltage_init();       // 电压检测
@@ -54,9 +54,9 @@ void main(void)
 // 	s = 0.0f;
 	
 //     // 电感系数
-// 	A_ = 1.0f;
-// 	B_ = 5.0f;
-// 	C_ = 0.4f;
+	A_ = 1.0f;
+	B_ = 5.0f;
+	C_ = 0.4f;
 	
     // 使能全局中断
     EA = 1;
@@ -64,7 +64,7 @@ void main(void)
     while(1) {
 		if(P75 == 0) // 调参模式 开关在上
         {
-            flag_key_control = 0;
+            flag_key_control = 1;
             key_scan();
             ui_display();
         }
@@ -106,41 +106,40 @@ void main(void)
 		
  		if (send_flag) {
  			send_flag = 0;
-//  			printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,",
-//  //					kp_direction, kd_direction,
-//  //					kp_direction_2, kd_direction_2,
-//  					kpa, kpb, kd, kd_imu,
-//  //					kp_direction_3, kd_direction_3,
-//  					motor_left.Kp_motor, motor_left.Ki_motor);
+ 			printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,",
+ //					kp_direction, kd_direction,
+ //					kp_direction_2, kd_direction_2,
+ 					kpa, kpb, kd, kd_imu,
+ //					kp_direction_3, kd_direction_3,
+ 					motor_left.Kp_motor, motor_left.Ki_motor);
 			
-//  			printf("%.2f,", aaddcc.err_dir);
+ 			printf("%.2f,", aaddcc.err_dir);
 
-//  			printf("%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,",
-//  					motor_left.setspeed, motor_left.encoder_data,
-//  					motor_right.setspeed, motor_right.encoder_data,
-//  					abs(motor_left.setspeed - motor_right.setspeed),
-//  					(int)(motor_left.encoder_data / 0.005 / 1024 * 20 / 13 * 60),
-//  					motor_left.duty1,
-//  					motor_right.duty1,
-//  					s,
-//  					normal_speed);
+ 			printf("%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,",
+ 					motor_left.setspeed, motor_left.encoder_data,
+ 					motor_right.setspeed, motor_right.encoder_data,
+ 					abs(motor_left.setspeed - motor_right.setspeed),
+ 					(int)(motor_left.encoder_data / 0.005 / 1024 * 20 / 13 * 60),
+ 					motor_left.duty1,
+ 					motor_right.duty1,
+ 					s,
+ 					normal_speed);
 			
-//  			printf("%d,", voltage);
+ 			printf("%d,", voltage);
 					
-//  			printf("%.2f,%.2f,%.2f,",
-//  					A_, B_, C_);
+ 			printf("%.2f,%.2f,%.2f,",
+ 					A_, B_, C_);
 					
-//  			printf("%.2f,%.2f,%.2f,%.2f,", AD_ONE[0],AD_ONE[1],AD_ONE[3],AD_ONE[4]);
+ 			printf("%.2f,%.2f,%.2f,%.2f,", AD_ONE[0],AD_ONE[1],AD_ONE[3],AD_ONE[4]);
 			
-//  			printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
+ 			printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
 					
-//  			printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z);
-//  		}
-        }
-        if (send_flag_nav && path_point_count < path_point_count_threshold) {
-            send_flag_nav = 0;
-            printf("%d,%.2f,%.2f,%d,%.2f\r\n", path_point_count, path_points[path_point_count].distance,
-                path_points[path_point_count].yaw_relative, path_points[path_point_count].isturn, imu660ra_gyro_z / 16.4f);
-        }
+ 			printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z / 16.4);
+ 		}
+        // if (send_flag_nav && path_point_count < path_point_count_threshold) {
+        //     send_flag_nav = 0;
+        //     printf("%d,%.2f,%.2f,%d,%.2f\r\n", path_point_count, path_points[path_point_count].distance,
+        //         path_points[path_point_count].yaw_relative, path_points[path_point_count].isturn, imu660ra_gyro_z / 16.4f);
+        // }
     }
 }

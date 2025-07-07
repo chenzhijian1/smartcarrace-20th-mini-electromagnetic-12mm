@@ -112,6 +112,11 @@ extern float block_speed;
 extern float block_out_angle;
 extern float block_back_angle;
 
+extern float distance_before_huandao;
+extern float distance_after_huandao;
+extern float angle_in_threshold;
+extern float angle_out_threshold;
+
 extern float s;
 
 extern float gyro_z;

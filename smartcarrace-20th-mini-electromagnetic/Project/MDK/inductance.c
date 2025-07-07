@@ -97,34 +97,53 @@ void direction_adc_get(void)
     for (i = 0; i < NUM; i++)
     {
         if (MAX_ADC[i] == 0)
-        {
             MAX_ADC[i] = 1; // 防止除以0的情况
-        }
+
         AD_ONE[i] = (float)(ad_ave[i] / MAX_ADC[i]);
+
         if (AD_ONE[i] < 0.0)
             AD_ONE[i] = 0.001;
         if (AD_ONE[i] > 1.0)
             AD_ONE[i] = 1.0;
-        AD_ONE[i] = 100 * AD_ONE[i];
+        AD_ONE[i] *= 100;
     }
 	
+    // 环岛判断 四电感
+    // if (flag == 0 && AD_ONE[0] >= 20 && AD_ONE[3] >= 20) { //环岛
+    //     encoder_temp = encoder_ave;
+		
+		
+    //     if (AD_ONE[1] >= AD_ONE[4] * 2 && AD_ONE[1] >= 30) {
+	// 		flag = 2;
+	// 		flag1 = 1;  //控制编码器值只记录第一次检测到环岛
+	// 		flag_huandao = 0;
+	// 	}
+    //     if (AD_ONE[4] >= AD_ONE[1] * 2 && AD_ONE[4] >= 30) {
+	// 		flag = 2;
+	// 		flag1 = 1;  //控制编码器值只记录第一次检测到环岛
+	// 		flag_huandao = 1;
+	// 	}
+    // }
+    
+    // 环岛判断 五电感
+    if (flag == 0 && flag1 == 0 && AD_ONE[2] >= 60) {
+		encoder_temp = encoder_ave;
+		flag = 1;
+    }
+
 	// 差比和计算
     aaddcc.last_err_dir = aaddcc.err_dir;
 
     if (AD_ONE[0] + AD_ONE[1] + AD_ONE[3] + AD_ONE[4] < 4)
-    {
         aaddcc.err_dir = 0;
-    }
 
-    else
-    {         
+    else {
         adc_left_dir = sqrt(A_ * AD_ONE[0] * AD_ONE[0] + B_ * AD_ONE[1] * AD_ONE[1]);
 		adc_right_dir = sqrt(A_ * AD_ONE[3] * AD_ONE[3] + B_ *   AD_ONE[4] * AD_ONE[4]);
 		//adc_left_dir = sqrt(AD_ONE[0] * AD_ONE[0]);
 		//adc_right_dir = sqrt(AD_ONE[4] * AD_ONE[4]); 
                   
         aaddcc.err_dir = 50 * ((adc_left_dir - adc_right_dir) / (adc_left_dir + adc_right_dir));
-        
     }
 //	else {
 //		aaddcc.err_dir = 20 * (A_ * (AD_ONE[0] - AD_ONE[3]) + B_ * (AD_ONE[1] - AD_ONE[4])) /

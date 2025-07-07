@@ -17,10 +17,10 @@ extern uint8 timing_started;
 // float kd_direction_3_iap = 11;
 float kpa_iap = 4;
 float kpb_iap = 10;
-float kd_iap = 30;
+float kd_iap = 25;
 float kd_imu_iap = 0;
-float kp_motor_iap = 58;
-float ki_motor_iap = 5.5;
+float kp_motor_iap = 20;
+float ki_motor_iap = 4.0;
 
 
 float block_speed_iap = 100;
@@ -32,13 +32,19 @@ float speed_high_iap = 320;
 float speed_low_iap = 230;
 float speed_turn_iap = 160;
 float speed_adjust_iap = 200;
-float normal_speed_iap = 200;
+float normal_speed_iap = 0;
 
 float block_judge_iap = 600;
 float block_out_encode_iap = 150;
 float block_back_encode_iap = 250;
 float block_out_angle_iap = 35;
 float block_back_angle_iap = 20;
+
+float distance_before_huandao_iap = 150;
+float distance_after_huandao_iap = 150;
+float angle_in_threshold_iap = 30;
+float angle_out_threshold_iap = 30;
+
 // 拨码开关状态变量
 uint8 sw1_status;
 uint8 sw2_status;
@@ -155,7 +161,7 @@ void DataInit() // eeprom初始化数据
 //	  extern_iap_write_float(block_out_angle, 3, 1, 0xd0);
 //	  extern_iap_write_float(block_back_angle, 3, 1, 0xd7);
     
-
+    // pid参数
     kpa = iap_read_float(7, 0x07) > 0 ? iap_read_float(7, 0x07) : kpa_iap;
     kpb = iap_read_float(7, 0x10) > 0 ? iap_read_float(7, 0x10) : kpb_iap;
     kd = iap_read_float(7, 0x90) > 0 ? iap_read_float(7, 0x90) : kd_iap;
@@ -170,6 +176,7 @@ void DataInit() // eeprom初始化数据
 // //lowv_huandao = iap_read_float(7, 0x27);
 //     max_speed = iap_read_float(7, 0x30);
     
+    // 速度参数
     speed_high = iap_read_float(7, 0x17) > 0 ? iap_read_float(7, 0x17) : speed_high_iap;
     speed_low = iap_read_float(7, 0x20) > 0 ? iap_read_float(7, 0x20) : speed_low_iap;
     speed_turn = iap_read_float(7, 0x27) > 0 ? iap_read_float(7, 0x27) : speed_turn_iap;
@@ -177,11 +184,17 @@ void DataInit() // eeprom初始化数据
     normal_speed = iap_read_float(7, 0x65) > 0 ? iap_read_float(7, 0x65) : normal_speed_iap;
 
     // 暂时还未更改成环岛中的可调参数，改了也需要跟上面格式一样
-    block_judge = iap_read_float(7, 0x50);
-    block_out_encode = iap_read_float(7, 0x56);
-    block_back_encode = iap_read_float(7, 0x80);
-    block_out_angle = iap_read_float(7, 0xd0);
-    block_back_angle = iap_read_float(7, 0xd7);
+    // block_judge = iap_read_float(7, 0x50);
+    // block_out_encode = iap_read_float(7, 0x56);
+    // block_back_encode = iap_read_float(7, 0x80);
+    // block_out_angle = iap_read_float(7, 0xd0);
+    block_back_angle = iap_read_float(7, 0xd7); // 这个还没用上
+
+    // 环岛参数
+    distance_before_huandao = iap_read_float(7, 0x50) > 0 ? iap_read_float(7, 0x50) : distance_before_huandao_iap;
+    distance_after_huandao = iap_read_float(7, 0x56) > 0 ? iap_read_float(7, 0x56) : distance_after_huandao_iap;
+    angle_in_threshold = iap_read_float(7, 0x80) > 0 ? iap_read_float(7, 0x80) : angle_in_threshold_iap;
+    angle_out_threshold = iap_read_float(7, 0xd0) > 0 ? iap_read_float(7, 0xd0) : angle_out_threshold_iap;
 
     // 有路径点时，读取路径点，并设置 flag_key_fast 为 1 进入快速循迹模式
     path_point_count = iap_read_float(6, 0x200) > 0 ?(uint16)iap_read_float(6, 0x200) : 0;
@@ -207,8 +220,8 @@ unsigned char xdata ui_page0[8][30] =
     {
         "  <INCREDIBLE_KING>   <page0>",
         "  pid",
-        "  speed_change",
-        "  tof_change",
+        "  speed",
+        "  circle",
         "",
         "",
         "",
@@ -227,7 +240,7 @@ unsigned char xdata ui_page1[8][30] =
 
 unsigned char xdata ui_page2[8][30] =
     {
-        "  <speed_change>      <page2>",
+        "  <speed>             <page2>",
         "  normal_speed",
         "  speed_high",
         "  speed_low",
@@ -238,11 +251,11 @@ unsigned char xdata ui_page2[8][30] =
 
 unsigned char xdata ui_page3[8][30] =
     {
-        "  <tof_change>        <page3>",
-        "  block_judge",
-        "  block_out_encode",
-        "  block_back_encode",
-        "  block_out_angle",
+        "  <circle>            <page3>",
+        "  dis_before",
+        "  dis_after",
+        "  angle_in",
+        "  angle_out",
         "  block_back_angle",
         "",
         "  <EXIT>---------------------"};
@@ -373,11 +386,15 @@ void ui_display(void)
             UI_DispUIStrings(ui_page3);
 
             //
-            ips114_showfloat(155, 1, block_judge, 3, 2);
-            ips114_showfloat(155, 2, block_out_encode, 3, 2);
-            ips114_showfloat(155, 3, block_back_encode, 3, 2);
-            ips114_showfloat(155, 4, block_out_angle, 3, 2);
-            ips114_showfloat(155, 5, block_back_angle, 3, 2);
+            // ips114_showfloat(155, 1, block_judge, 3, 2);
+            // ips114_showfloat(155, 2, block_out_encode, 3, 2);
+            // ips114_showfloat(155, 3, block_back_encode, 3, 2);
+            // ips114_showfloat(155, 4, block_out_angle, 3, 2);
+            ips114_showfloat(155, 1, distance_before_huandao, 3, 2);
+            ips114_showfloat(155, 2, distance_after_huandao, 3, 2);
+            ips114_showfloat(155, 3, angle_in_threshold, 3, 2);
+            ips114_showfloat(155, 4, angle_out_threshold, 3, 2);
+            ips114_showfloat(155, 5, block_back_angle, 3, 2); // 还没用上
 
             //
         }
@@ -389,11 +406,15 @@ void ui_display(void)
             UI_DispUIStrings(ui_page3);
 
             //
-            ips114_showfloat(155, 1, block_judge, 3, 2);
-            ips114_showfloat(155, 2, block_out_encode, 3, 2);
-            ips114_showfloat(155, 3, block_back_encode, 3, 2);
-            ips114_showfloat(155, 4, block_out_angle, 3, 2);
-            ips114_showfloat(155, 5, block_back_angle, 3, 2);
+            // ips114_showfloat(155, 1, block_judge, 3, 2);
+            // ips114_showfloat(155, 2, block_out_encode, 3, 2);
+            // ips114_showfloat(155, 3, block_back_encode, 3, 2);
+            // ips114_showfloat(155, 4, block_out_angle, 3, 2);
+            ips114_showfloat(155, 1, distance_before_huandao, 3, 2);
+            ips114_showfloat(155, 2, distance_after_huandao, 3, 2);
+            ips114_showfloat(155, 3, angle_in_threshold, 3, 2);
+            ips114_showfloat(155, 4, angle_out_threshold, 3, 2);
+            ips114_showfloat(155, 5, block_back_angle, 3, 2); // 还没用上
 
             //
         }
@@ -504,10 +525,14 @@ void key_scan(void)
                 speed_turn_iap = speed_turn;
                 speed_adjust_iap = speed_adjust;
 
-                block_judge_iap = block_judge;
-                block_out_encode_iap = block_out_encode;
-                block_back_encode_iap = block_back_encode;
-                block_out_angle_iap = block_out_angle;
+                // block_judge_iap = block_judge;
+                // block_out_encode_iap = block_out_encode;
+                // block_back_encode_iap = block_back_encode;
+                // block_out_angle_iap = block_out_angle;
+                distance_before_huandao_iap = distance_before_huandao;
+                distance_after_huandao_iap = distance_after_huandao;
+                angle_in_threshold_iap = angle_in_threshold;
+                angle_out_threshold_iap = angle_out_threshold;
                 block_back_angle_iap = block_back_angle;
 
                 extern_iap_write_float(kpa_iap, 3, 1, 0x07);
@@ -523,11 +548,15 @@ void key_scan(void)
                 extern_iap_write_float(speed_adjust_iap, 3, 1, 0x30);
                 extern_iap_write_float(normal_speed_iap, 3, 1, 0x65);
 
-                extern_iap_write_float(block_judge_iap, 3, 1, 0x50);
-                extern_iap_write_float(block_out_encode_iap, 3, 1, 0x56);
-                extern_iap_write_float(block_back_encode_iap, 3, 1, 0x80);
-                extern_iap_write_float(block_out_angle_iap, 3, 1, 0xd0);
-                extern_iap_write_float(block_back_angle_iap, 3, 1, 0xd7);
+                // extern_iap_write_float(block_judge_iap, 3, 1, 0x50);
+                // extern_iap_write_float(block_out_encode_iap, 3, 1, 0x56);
+                // extern_iap_write_float(block_back_encode_iap, 3, 1, 0x80);
+                // extern_iap_write_float(block_out_angle_iap, 3, 1, 0xd0);
+                extern_iap_write_float(distance_before_huandao_iap, 3, 1, 0x50);
+                extern_iap_write_float(distance_after_huandao_iap, 3, 1, 0x56);
+                extern_iap_write_float(angle_in_threshold_iap, 3, 1, 0x80);
+                extern_iap_write_float(angle_out_threshold_iap, 3, 1, 0xd0);
+                extern_iap_write_float(block_back_angle_iap, 3, 1, 0xd7); // 还没用上
             }
 
             break;
@@ -590,23 +619,27 @@ void key_scan(void)
         case 3:
             if (ui.cursor == 1)
             {
-                block_judge += 2;
+                // block_judge += 2;
+                distance_before_huandao += 1;
             }
             else if (ui.cursor == 2)
             {
-                block_out_encode += 2;
+                // block_out_encode += 2;
+                distance_after_huandao += 1;
             }
             else if (ui.cursor == 3)
             {
-                block_back_encode += 2;
+                // block_back_encode += 2;
+                angle_in_threshold += 1;
             }
             else if (ui.cursor == 4)
             {
-                block_out_angle += 2;
+                // block_out_angle += 2;
+                angle_out_threshold += 1;
             }
             else if (ui.cursor == 5)
             {
-                block_back_angle += 2;
+                block_back_angle += 2; // 还没用上
             }
             else if (ui.cursor == 7)
             {
@@ -696,23 +729,27 @@ void key_scan(void)
         case 3:
             if (ui.cursor == 1)
             {
-                block_judge -= 2;
+                // block_judge -= 2;
+                distance_before_huandao -= 1;
             }
             else if (ui.cursor == 2)
             {
-                block_out_encode -= 2;
+                // block_out_encode -= 2;
+                distance_after_huandao -= 1;
             }
             else if (ui.cursor == 3)
             {
-                block_back_encode -= 2;
+                // block_back_encode -= 2;
+                angle_in_threshold -= 1;
             }
             else if (ui.cursor == 4)
             {
-                block_out_angle -= 2;
+                // block_out_angle -= 2;
+                angle_out_threshold -= 1;
             }
             else if (ui.cursor == 5)
             {
-                block_back_angle -= 2;
+                block_back_angle -= 2; // 还没用上
             }
             else if (ui.cursor == 7)
             {
