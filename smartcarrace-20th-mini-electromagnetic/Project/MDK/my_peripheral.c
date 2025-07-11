@@ -15,12 +15,13 @@ extern uint8 timing_started;
 // float kd_direction_2_iap = 11;
 // float kp_direction_3_iap = 5;
 // float kd_direction_3_iap = 11;
-float kpa_iap = 4;
-float kpb_iap = 10;
-float kd_iap = 25;
+float kpa_iap = 10;
+float kpb_iap = 15;
+float kd_iap = 120;
 float kd_imu_iap = 0;
+
 float kp_motor_iap = 20;
-float ki_motor_iap = 4.0;
+float ki_motor_iap = 3.5;
 
 
 float block_speed_iap = 100;

@@ -67,17 +67,13 @@ float kd_direction_2 = 11;
 float kp_direction_3 = 5;
 float kd_direction_3 = 11;
 
-float kpa = 4;
-float kpb = 10;
-float kd = 25;
+float kpa = 10;
+float kpb = 15;
+float kd = 120;
 float kd_imu = 0; 
-//************不需要调的参数************//
 
-/*#define kp_motor 0      // 13.35         47  
-#define ki_motor 0 // 电机闭环的pid0.00322
-#define kd_motor 0*/
 float kp_motor = 20.0;
-float ki_motor = 4.0;
+float ki_motor = 3.5;
 float kd_motor = 0.0;
 
 uint8 flag = 0; // 0: 正常模式；1: 预环岛模式；2: 环岛模式；3: 出环调整；4: 障碍模式；5: 坡道模式
@@ -257,7 +253,7 @@ void speed_change()
                 }
             }
             else {
-                changed_speed = MINMAX(changed_speed, -100, 100);
+                changed_speed = MINMAX(changed_speed, -110, 110);
                 
                 // 加少减多
                 k = fabs(aaddcc.err_dir / 50.0f);
@@ -289,86 +285,87 @@ void speed_change()
             else  flag = 2;
             break;
 
-        case 2: // 圆环4
-			
-            // else { //到环岛交点
-                if (flag_set_angle == 0) { // 第一次进入
-                    target_angle_in = yaw;
-                    flag_set_angle = 1;
+        case 2: // 环岛模式
+            if (flag_set_angle == 0) { // 第一次进入
+                target_angle_in = yaw;
+                flag_set_angle = 1;
+            }
+
+            if (flag_huandao == 0) { // 左环岛
+                target_angle_out = target_angle_in + 350; // 目标出环角度
+
+                if (flag_circle_in == 0) { // 状态1：进环转弯
+                    if (yaw - target_angle_in > angle_in_threshold) {
+                        flag_circle_in = 1; // 进入环内循迹状态
+                    }
+                    // 左转进环
+                    set_leftspeed = low_speed_huandao;
+                    set_rightspeed = high_speed_huandao;
                 }
-
-                if (flag_huandao == 0) { // 左环岛
-					target_angle_out = target_angle_in + 350;
-					
-					if (yaw - target_angle_in > angle_in_threshold) // 进去一段路了
-						flag_circle_in = 1;
-					
-					if (flag_circle_in == 0) { //左转进环
-						set_leftspeed = low_speed_huandao;
-						set_rightspeed = high_speed_huandao;
-					}
-					else { //正常循迹
-						dir_pid(aaddcc.err_dir, aaddcc.last_err_dir, (float)imu660ra_gyro_z);
-						changed_speed = MINMAX(changed_speed, -50, 50);
-
-						test_speed = speed_huandao;
-						set_leftspeed = test_speed - changed_speed;
-						set_rightspeed = test_speed + changed_speed;
-						set_leftspeed = MINMAX(set_leftspeed, -40, 300);
-						set_rightspeed = MINMAX(set_rightspeed, -40, 300);
+                else if (flag_circle_out == 0) { // 状态2：环内循迹
+                    if (target_angle_out - yaw < angle_out_threshold) { // 离出来只有一点了
+                        flag_circle_out = 1; // 进入出环转弯状态
                     }
-					if (target_angle_out - yaw < angle_out_threshold) // 离出来只有一点了
-						flag_circle_out = 1;
-						
-					if (flag_circle_out == 0) {
-                        // 左转出弯
+                    // 正常循迹
+                    dir_pid(aaddcc.err_dir, aaddcc.last_err_dir, (float)imu660ra_gyro_z);
+                    changed_speed = MINMAX(changed_speed, -50, 50);
+
+                    test_speed = speed_huandao;
+
+                    set_leftspeed = test_speed - changed_speed;
+                    set_rightspeed = test_speed + changed_speed;
+                    set_leftspeed = MINMAX(set_leftspeed, -40, 300);
+                    set_rightspeed = MINMAX(set_rightspeed, -40, 300);
+                }
+                else { // 状态3：出环转弯
+                    if (yaw < target_angle_out) { // 尚未达到回到直道的角度
+                        // 左转出环
                         set_leftspeed = low_speed_huandao;
-						set_rightspeed = high_speed_huandao;  
+                        set_rightspeed = high_speed_huandao;
                     }
-                    else {
+                    else { // 达到回到直道的角度，切换到出环模式
                         encoder_temp = encoder_ave;
                         flag = 3; // 出环模式
-					}
+                    }
                 }
-
-                else { // 右环岛
-                    target_angle_out = target_angle_in - 350;
-//                    if (cnt_circle_in++ >= delay_ms_in / 5) //延时达到
-//                        flag_circle_in = 1;
-					if (target_angle_in - yaw > angle_in_threshold)
-						flag_circle_in = 1;
-                    
-                    if (flag_circle_in == 0) {
-                        // flag2 = 1; // 调试
-                        //右转进环
-                        set_leftspeed = high_speed_huandao;
-                        set_rightspeed = low_speed_huandao;
+            }
+            else { // 右环岛
+                target_angle_out = target_angle_in - 360; // 目标出环角度
+                
+                if (flag_circle_in == 0) { // 状态1：进环转弯
+                    if (target_angle_in - yaw > angle_in_threshold) {
+                        flag_circle_in = 1; // 进入环内循迹状态
                     }
-                    else { //正常循迹
-                        dir_pid(aaddcc.err_dir, aaddcc.last_err_dir, (float)imu660ra_gyro_z);
-                        changed_speed = MINMAX(changed_speed, -50, 50);
-
-                        test_speed = speed_huandao;
-                        set_leftspeed = test_speed - changed_speed;
-                        set_rightspeed = test_speed + changed_speed;
-                        set_leftspeed = MINMAX(set_leftspeed, -40, 300);
-                        set_rightspeed = MINMAX(set_rightspeed, -40, 300);
+                    // 右转进环
+                    set_leftspeed = high_speed_huandao;
+                    set_rightspeed = low_speed_huandao;
+                }
+                else if (flag_circle_out == 0) { // 状态2：环内循迹
+                    if (yaw - target_angle_out < angle_out_threshold) {
+                        flag_circle_out = 1; // 进入出环转弯状态
                     }
-					if (yaw - target_angle_out < angle_out_threshold)
-						flag_circle_out = 1;
+                    // 正常循迹
+                    dir_pid(aaddcc.err_dir, aaddcc.last_err_dir, (float)imu660ra_gyro_z);
+                    changed_speed = MINMAX(changed_speed, -50, 50);
 
-                    if (flag_circle_out == 0) {
+                    test_speed = speed_huandao;
+                    set_leftspeed = test_speed - changed_speed;
+                    set_rightspeed = test_speed + changed_speed;
+                    set_leftspeed = MINMAX(set_leftspeed, -40, 300);
+                    set_rightspeed = MINMAX(set_rightspeed, -40, 300);
+                }
+                else { // 状态3：出环转弯
+                    if (yaw > target_angle_out) { // 尚未达到回到直道的角度
                         // 右转出环
                         set_leftspeed = high_speed_huandao;
                         set_rightspeed = low_speed_huandao;
                     }
-                    else {
-						encoder_temp = encoder_ave;
-						flag = 3; // 出环模式
+                    else { // 达到回到直道的角度，切换到出环模式
+                        encoder_temp = encoder_ave;
+                        flag = 3; // 出环模式
                     }
                 }
-            // }
-
+            }
             break;
 
         case 3: // 出环
@@ -710,8 +707,8 @@ void motor_control(int16 speed_l, int16 speed_r)
     motor_left.duty1 *= (12600.0f / voltage);
     motor_right.duty1 *= (12600.0f / voltage);
 
-    motor_left.duty1 = MINMAX(motor_left.duty1, -10000, 10000);
-    motor_right.duty1 = MINMAX(motor_right.duty1, -10000, 10000);
+    motor_left.duty1 = MINMAX(motor_left.duty1, -8000, 8000);
+    motor_right.duty1 = MINMAX(motor_right.duty1, -8000, 8000);
 
     motor_driver_open_out_ir();
 //	motor_driver_open_out_dr();

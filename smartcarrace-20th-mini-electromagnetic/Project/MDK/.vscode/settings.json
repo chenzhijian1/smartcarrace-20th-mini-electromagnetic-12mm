@@ -5,6 +5,7 @@
         "pid.h": "c",
         "inductance.h": "c",
         "seekfree_printf.h": "c",
-        "headfile.h": "c"
+        "headfile.h": "c",
+        "cmath": "c"
     }
 }
