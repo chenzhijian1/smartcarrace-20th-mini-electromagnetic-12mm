@@ -2,6 +2,9 @@
 #define __MY_MOTOR_H
 #include "headfile.h"
 
+#define huandao_num 3 // »·µº¸öÊý
+extern uint8 huandao_count;
+
 #define MINN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAXX(a, b) (((a) > (b)) ? (a) : (b))
 #define MINMAX(input, low, upper) MINN(MAXX(input, low), upper)
@@ -50,7 +53,7 @@ void encoder();
 void encoder_clear();
 void motor_struct_parameter_init(motor_struct *sptr, int16 sspeed);
 void dir_pid (float, float, float);
-void dir_pid_sep (float, float, float);
+void dir_pid_sep (float, float);
 void motor_driver_init_dr(void);
 void motor_driver_init_ir(void);
 void motor_driver_open_out(void);

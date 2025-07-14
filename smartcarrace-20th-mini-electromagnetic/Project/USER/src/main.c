@@ -19,7 +19,7 @@ void main(void)
     direction_adc_init(); // 电感     
     motor_driver_init_ir();  // 电机
 //	motor_driver_init_dr();
-    // imu660ra_init();      // 陀螺仪
+    imu660ra_init();      // 陀螺仪
 //	offset_init();        // 零漂
     wireless_uart_init(); // 无线串口
 	voltage_init();       // 电压检测
@@ -28,7 +28,7 @@ void main(void)
 
     pit_timer_ms(TIM_1, 5);  // 电感、陀螺仪、编码器、串口
     pit_timer_ms(TIM_4, 5);  // 电机、电压检测、路径记忆
-    DataInit();
+    // DataInit();
 
     // 旧方向环
     // kp_direction = 0.5f;
@@ -54,9 +54,9 @@ void main(void)
 // 	s = 0.0f;
 	
 //     // 电感系数
-	A_ = 1.0f;
-	B_ = 5.0f;
-	C_ = 0.4f;
+	A_ = 1.0;
+	B_ = 5.0;
+	C_ = 0.4;
 	
     // 使能全局中断
     EA = 1;
@@ -106,28 +106,35 @@ void main(void)
 		
  		if (send_flag) {
  			send_flag = 0;
- 			printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,",
+ 			printf("%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,",
  					kpa, kpb, kd, kd_imu,
  					motor_left.Kp_motor, motor_left.Ki_motor);
 			
  			printf("%.2f,", aaddcc.err_dir);
 
- 			printf("%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,",
- 					motor_left.setspeed, motor_left.encoder_data,
- 					motor_right.setspeed, motor_right.encoder_data,
- 					abs(motor_left.setspeed - motor_right.setspeed),
- 					motor_left.duty1,
- 					motor_right.duty1,
- 					s,
- 					normal_speed);
+ 			// printf("%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,",
+ 			// 		motor_left.setspeed, motor_left.encoder_data,
+ 			// 		motor_right.setspeed, motor_right.encoder_data,
+ 			// 		abs(motor_left.setspeed - motor_right.setspeed),
+ 			// 		motor_left.duty1,
+ 			// 		motor_right.duty1,
+ 			// 		s,
+ 			// 		normal_speed);
+
+            printf("%d,%d,%d,%d,%d,%d,%.1f,%.1f,",
+                    motor_left.setspeed, motor_left.encoder_data,
+                    motor_right.setspeed, motor_right.encoder_data,
+                    motor_left.duty1,
+                    motor_right.duty1,
+                    normal_speed);
 			
  			printf("%d,", voltage);
 					
- 			printf("%.2f,%.2f,%.2f,%.2f,%.2f,", AD_ONE[0],AD_ONE[1],AD_ONE[2],AD_ONE[3],AD_ONE[4]);
+ 			printf("%.1f,%.1f,%.1f,%.1f,%.1f,", AD_ONE[0],AD_ONE[1],AD_ONE[2],AD_ONE[3],AD_ONE[4]);
 			
  			// printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
 
-            printf("%.2f\r\n", imu660ra_gyro_z / 16.4);
+            printf("%.1f\r\n", imu660ra_gyro_z / 16.4);
             // printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z / 16.4);
  		}
         // if (send_flag_nav && path_point_count < path_point_count_threshold) {

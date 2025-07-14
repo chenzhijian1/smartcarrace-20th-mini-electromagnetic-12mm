@@ -15,9 +15,9 @@ extern uint8 timing_started;
 // float kd_direction_2_iap = 11;
 // float kp_direction_3_iap = 5;
 // float kd_direction_3_iap = 11;
-float kpa_iap = 10;
-float kpb_iap = 15;
-float kd_iap = 120;
+float kpa_iap = 9;
+float kpb_iap = 25;
+float kd_iap = 130;
 float kd_imu_iap = 0;
 
 float kp_motor_iap = 20;
@@ -189,13 +189,13 @@ void DataInit() // eeprom初始化数据
     // block_out_encode = iap_read_float(7, 0x56);
     // block_back_encode = iap_read_float(7, 0x80);
     // block_out_angle = iap_read_float(7, 0xd0);
-    block_back_angle = iap_read_float(7, 0xd7); // 这个还没用上
+    // block_back_angle = iap_read_float(7, 0xd7); // 这个还没用上
 
     // 环岛参数
     distance_before_huandao = iap_read_float(7, 0x50) > 0 ? iap_read_float(7, 0x50) : distance_before_huandao_iap;
     distance_after_huandao = iap_read_float(7, 0x56) > 0 ? iap_read_float(7, 0x56) : distance_after_huandao_iap;
     angle_in_threshold = iap_read_float(7, 0x80) > 0 ? iap_read_float(7, 0x80) : angle_in_threshold_iap;
-    angle_out_threshold = iap_read_float(7, 0xd0) > 0 ? iap_read_float(7, 0xd0) : angle_out_threshold_iap;
+    angle_out_threshold = iap_read_float(7, 0xd0) > 0 ? iap_read_float(7, 0xd0) : angle_out_threshold_iap; 
 
     // 有路径点时，读取路径点，并设置 flag_key_fast 为 1 进入快速循迹模式
     path_point_count = iap_read_float(6, 0x200) > 0 ?(uint16)iap_read_float(6, 0x200) : 0;
@@ -257,7 +257,7 @@ unsigned char xdata ui_page3[8][30] =
         "  dis_after",
         "  angle_in",
         "  angle_out",
-        "  block_back_angle",
+        "",
         "",
         "  <EXIT>---------------------"};
 
@@ -395,7 +395,7 @@ void ui_display(void)
             ips114_showfloat(155, 2, distance_after_huandao, 3, 2);
             ips114_showfloat(155, 3, angle_in_threshold, 3, 2);
             ips114_showfloat(155, 4, angle_out_threshold, 3, 2);
-            ips114_showfloat(155, 5, block_back_angle, 3, 2); // 还没用上
+            // ips114_showfloat(155, 5, block_back_angle, 3, 2); // 还没用上
 
             //
         }
@@ -415,7 +415,7 @@ void ui_display(void)
             ips114_showfloat(155, 2, distance_after_huandao, 3, 2);
             ips114_showfloat(155, 3, angle_in_threshold, 3, 2);
             ips114_showfloat(155, 4, angle_out_threshold, 3, 2);
-            ips114_showfloat(155, 5, block_back_angle, 3, 2); // 还没用上
+            // ips114_showfloat(155, 5, block_back_angle, 3, 2); // 还没用上
 
             //
         }
@@ -534,7 +534,7 @@ void key_scan(void)
                 distance_after_huandao_iap = distance_after_huandao;
                 angle_in_threshold_iap = angle_in_threshold;
                 angle_out_threshold_iap = angle_out_threshold;
-                block_back_angle_iap = block_back_angle;
+                // block_back_angle_iap = block_back_angle;
 
                 extern_iap_write_float(kpa_iap, 3, 1, 0x07);
                 extern_iap_write_float(kpb_iap, 3, 1, 0x10);
@@ -557,7 +557,7 @@ void key_scan(void)
                 extern_iap_write_float(distance_after_huandao_iap, 3, 1, 0x56);
                 extern_iap_write_float(angle_in_threshold_iap, 3, 1, 0x80);
                 extern_iap_write_float(angle_out_threshold_iap, 3, 1, 0xd0);
-                extern_iap_write_float(block_back_angle_iap, 3, 1, 0xd7); // 还没用上
+                // extern_iap_write_float(block_back_angle_iap, 3, 1, 0xd7); // 还没用上
             }
 
             break;
@@ -640,7 +640,7 @@ void key_scan(void)
             }
             else if (ui.cursor == 5)
             {
-                block_back_angle += 2; // 还没用上
+                // block_back_angle += 2; // 还没用上
             }
             else if (ui.cursor == 7)
             {
@@ -750,7 +750,7 @@ void key_scan(void)
             }
             else if (ui.cursor == 5)
             {
-                block_back_angle -= 2; // 还没用上
+                // block_back_angle -= 2; // 还没用上
             }
             else if (ui.cursor == 7)
             {
@@ -830,8 +830,8 @@ void ips114_show(void)
     ips114_showstr(0, 4, "err");
     ips114_showfloat(50, 4, aaddcc.err_dir, 4, 2);
 
-    ips114_showstr(110, 4, "stop");
-    ips114_showuint8(160, 4, flag_stop);
+    ips114_showstr(110, 4, "hd_cnt");
+    ips114_showuint8(170, 4, huandao_count);
 
     ips114_showstr(0, 5, "target");
     ips114_showint16(60, 5, motor_left.setspeed);
@@ -860,8 +860,6 @@ void ips114_show(void)
 
 void angle_gyro()
 {
-//    yaw += ((imu660ra_gyro_x - Gyro_offset_z) / 65.6f) * 0.005;
-//	yaw += (((float)imu660ra_gyro_z - 2.70f) / 16.4f) * 0.005;
 	if (imu660ra_gyro_z > 4 || imu660ra_gyro_z < -4)
 		yaw += (((float)imu660ra_gyro_z - GYRO_OFFSET) / 16.4f) * 0.005;
 //	yaw += (gyro_z / 16.4f) * 0.005;

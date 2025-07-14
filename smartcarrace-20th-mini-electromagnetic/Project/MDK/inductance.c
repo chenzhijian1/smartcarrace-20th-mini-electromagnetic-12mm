@@ -10,12 +10,12 @@ uint8 flag1 = 0;
 /* 电感数据 */
 adc_struct aaddcc = {0}; // 定义电感adc采集结构体
 
-float MAX_ADC[NUM] = {MAX_TRANSVERSE, MAX_PORTRAINT, 3700,  MAX_TRANSVERSE, MAX_PORTRAINT};// 每次更换电感和赛道后需要调整
+float MAX_ADC[NUM] = {MAX_TRANSVERSE, MAX_PORTRAINT, 2000,  MAX_TRANSVERSE, MAX_PORTRAINT};// 每次更换电感和赛道后需要调整
 //float MAX_ADC[NUM] = {MAX_TRANSVERSE, MAX_PORTRAINT,3700,  MAX_TRANSVERSE, MAX_PORTRAINT};
 uint16 AD_value[NUM][5];  
-//uint16 AD_value[NUM][4];                                                                   // 原始采集电感数
-uint16 ad_ave[NUM] = {0};                                                                  // 滤波处理后的电感
-float AD_ONE[NUM] = {0};                                                                   // 归一化后的电感
+//uint16 AD_value[NUM][4];    // 原始采集电感数
+uint16 ad_ave[NUM] = {0};     // 滤波处理后的电感
+float AD_ONE[NUM] = {0};      // 归一化后的电感
 uint16 middle[3] = {0}; 
 float adc_left_dir = 0.0;
 float adc_right_dir = 0.0;
@@ -31,10 +31,6 @@ void direction_adc_init(void) // 电感（ADC）初始化
 
     adc_init(ADC_P06, ADC_SYSclk_DIV_2); //  in4左前
     adc_init(ADC_P13, ADC_SYSclk_DIV_2); //  in5中横
-	
-	//自己的板子从左到右  00 01 05 06 13
-
- //   adc_init(ADC_P16, ADC_SYSclk_DIV_2); // tof*/
 }
 
 //--------------------------------ADC
@@ -57,24 +53,13 @@ void direction_adc_get(void)
 
         AD_value[3][i] = adc_once(ADC_P00, ADC_12BIT); // 右横
         AD_value[4][i] = adc_once(ADC_P01, ADC_12BIT); // 右竖
-	    // AD_value[0][i] = adc_once(ADC_P13, ADC_12BIT); // 左横
-        // AD_value[1][i] = adc_once(ADC_P06, ADC_12BIT); // 左竖
-
-        // AD_value[2][i] = adc_once(ADC_P05, ADC_12BIT); // 中横电感
-
-        // AD_value[3][i] = adc_once(ADC_P00, ADC_12BIT); // 右横
-        // AD_value[4][i] = adc_once(ADC_P01, ADC_12BIT); // 右竖
     }
 
     // 将每一路的5个值进行冒泡排序
-    for (i = 0; i < NUM; i++)
-    {
-        for (j = 0; j < 4; j++)
-        {
-            for (k = 0; k < 4 - j; k++)	
-            {
-                if (AD_value[i][k] > AD_value[i][k + 1])
-                {
+    for (i = 0; i < NUM; i++) {
+        for (j = 0; j < 4; j++) {
+            for (k = 0; k < 4 - j; k++)	 {
+                if (AD_value[i][k] > AD_value[i][k + 1]) {
                     adtemp = AD_value[i][k];
                     AD_value[i][k] = AD_value[i][k + 1];
                     AD_value[i][k + 1] = adtemp;
@@ -83,9 +68,7 @@ void direction_adc_get(void)
         }
     }
 
-    // 去掉首尾数据，中间三个取平均
-    for (i = 0; i < NUM; i++)
-    {
+    for (i = 0; i < NUM; i++) {
         ad_ave[i] = (AD_value[i][1] + AD_value[i][2] + AD_value[i][3]) * 0.333;
 //        if (ad_ave[i] > MAX_ADC[i])
 //            MAX_ADC[i] = ad_ave[i];
