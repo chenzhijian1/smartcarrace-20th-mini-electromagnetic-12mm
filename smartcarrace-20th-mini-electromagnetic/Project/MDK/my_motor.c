@@ -177,22 +177,26 @@ void speed_change()
             }
 
             if (flag_huandao == 0) { // 左环岛
-                target_angle_out = target_angle_in - 350; // 目标出环角度
+                target_angle_out = target_angle_in - 360; // 目标出环角度
 
                 set_leftspeed = normal_speed * (huandao_r[huandao_count] - (d/2)) / (huandao_r[huandao_count] + (d/2));
                 set_rightspeed = normal_speed;
 
-                if (yaw < target_angle_out)
+                if (yaw < target_angle_out) {
                     flag = 3; // 出环
+                    encoder_temp = encoder_ave;
+                }
             }
             else { // 右环岛
-                target_angle_out = target_angle_in + 350; // 目标出环角度
+                target_angle_out = target_angle_in + 360; // 目标出环角度
                 
                 set_leftspeed = normal_speed;
                 set_rightspeed = normal_speed * (huandao_r[huandao_count] - (d/2)) / (huandao_r[huandao_count] + (d/2));
 
-                if (yaw > target_angle_out)
+                if (yaw > target_angle_out) {
                     flag = 3; // 出环
+                    encoder_temp = encoder_ave;
+                }
             }
             break;
 
@@ -218,28 +222,36 @@ void speed_change()
             }
             break;
 
-          case 4: // 起步发车
-              if (encoder_ave >= 133)  flag = 0;
+        case 4: // 起步发车
+            if (encoder_ave >= 133)  flag = 0;
 
-              set_leftspeed = 150;
-              set_rightspeed = 150;
+            set_leftspeed = normal_speed;
+            set_rightspeed = normal_speed;
 
-              break;
+            break;
 
-            case 5: // 慢速停车
-                if (cnt_stop < 200) {
-                    cnt_stop++;
-                    normal_speed_cal = normal_speed / 200 * (200 - cnt_stop);
-                    set_leftspeed = normal_speed_cal;
-                    set_rightspeed = normal_speed_cal;
-                }
-                else {
-                    cnt_stop = 0;
-                    normal_speed = 0;
-                    set_leftspeed = 0;
-                    set_rightspeed = 0;
-                    flag_key_control = 0;
-                }
+        case 5: // 慢速停车
+            if (cnt_stop < 200) {
+                cnt_stop++;
+                normal_speed_cal = normal_speed / 200 * (200 - cnt_stop);
+                set_leftspeed = normal_speed_cal;
+                set_rightspeed = normal_speed_cal;
+            }
+            else {
+                cnt_stop = 0;
+                normal_speed = 0;
+                set_leftspeed = 0;
+                set_rightspeed = 0;
+                flag_key_control = 0;
+            }
+        
+        case 6: // 十字
+            if (encoder_ave >= 130)  flag = 0;
+
+            set_leftspeed = normal_speed_cal;
+            set_rightspeed = normal_speed_cal;
+
+            break;
 
         default:
             break;

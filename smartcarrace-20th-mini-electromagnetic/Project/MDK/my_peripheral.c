@@ -808,9 +808,11 @@ void ips114_show(void)
 //    ips114_showstr(0, 3, "cnt");
 //    ips114_showuint8(50, 3, cnt_circle_in); 		   // 显示cnt
 
-	
-//	ips114_showstr(0, 3, "flag1");
-//    ips114_showuint8(50, 3, flag1); 		   // 显示flag1
+    ips114_showstr(140, 2, "flag");
+    ips114_showuint8(170, 2, flag); 		   // 显示flag
+
+    //	ips114_showstr(0, 3, "flag1");
+    //    ips114_showuint8(50, 3, flag1); 		   // 显示flag1
 
 	ips114_showstr(0, 3, "fast");
     ips114_showuint8(50, 3, flag_key_fast); 		   // 显示flag_key_fast

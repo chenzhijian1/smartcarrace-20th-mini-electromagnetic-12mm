@@ -114,7 +114,13 @@ void direction_adc_get(void)
 		flag = 1;
     }
 
-	// 差比和计算
+    // 十字
+    // if (flag == 0 && AD_ONE[1] > 30 && AD_ONE[4] > 30) {
+    //     encoder_temp = encoder_ave;
+    //     flag = 6;
+    // }
+
+    // 差比和计算
     aaddcc.last_err_dir = aaddcc.err_dir;
 
     if (AD_ONE[0] + AD_ONE[1] + AD_ONE[3] + AD_ONE[4] < 4)
