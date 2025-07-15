@@ -6,6 +6,8 @@
         "inductance.h": "c",
         "seekfree_printf.h": "c",
         "headfile.h": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "type_traits": "c",
+        "string.h": "c"
     }
 }

@@ -21,7 +21,7 @@ float normal_speed = 0;
 float speed_huandao = 0;
 float normal_speed_cal = 0;
 
-// 方向环
+// 旧方向环
 float kp_direction = 5; // 方向环的pid
 float kd_direction = 11;
 float kp_direction_2 = 5;	
@@ -29,11 +29,20 @@ float kd_direction_2 = 11;
 float kp_direction_3 = 5;
 float kd_direction_3 = 11;
 
-float kpa = 9;
-float kpb = 25;
-float kd = 130;
+// 新方向环
+float kpa = 9.0f;
+float kpb = 25.0f;
+float kd = 130.0f;
 float kd_imu = 0;
 
+// 角速度环
+float kp_gyro = 0.4f; // 角速度环的pd
+float kd_gyro = 0.1f;
+float target_gyro_z = 0.0f; // 期望角速度
+float gyro_err = 0.0f;      // 角速度环当前误差
+float gyro_last_err = 0.0f; // 角速度环前一次误差
+
+// 电机速度环
 float kp_motor = 20;
 float ki_motor = 3.5;
 float kd_motor = 0.0;
@@ -74,6 +83,8 @@ float s;
 
 float gyro_z;
 
+uint8 time = 0;
+
 void speed_change()
 {
     if (flag != 4)
@@ -83,21 +94,24 @@ void speed_change()
         // if (flag_key_fast == 1)  fast_tracking();
         // else
         //     if (normal_speed != 0)  Path_record();
-
-        gyro_z = (gyro_z * lpf_gyro + (float)gyro_z * (1 - lpf_gyro)) / 16.4;
+        if (imu660ra_gyro_z <= 4 && imu660ra_gyro_z >= -4)
+            imu660ra_gyro_z = 0;
+        gyro_z = gyro_z * lpf_gyro + (float)imu660ra_gyro_z / 16.4f * (1 - lpf_gyro); // 陀螺仪低通滤波
 
         switch (flag)
         {
         case 0: // 正常模式
 //            if(fabs(aaddcc.err_dir) < 1 && fabs(aaddcc.last_err_dir) < 1 && !(aaddcc.err_dir ==0 && aaddcc.last_err_dir ==0 ))
 //            				test_speed += 0.001;
-			dir_pid(aaddcc.err_dir, aaddcc.last_err_dir, (float)gyro_z);
-//			dir_pid_sep(aaddcc.err_dir, aaddcc.last_err_dir, (float)gyro_z);
-			
+            if (time == 0)
+                dir_pid(aaddcc.err_dir, aaddcc.last_err_dir); // 方向环输出期望角速度target_gyro_z
+            gyro_pd_control(); // 角速度环计算changed_speed
+            
+            time = (time + 1) % 2;
+
             // 速度策略
             if (flag_start && cnt_start < 150) {
                 cnt_start++;
-                // normal_speed_cal = 150 + (normal_speed - 150) * cnt_start / 100.0;
                 normal_speed_cal = normal_speed / (150 * 150) * cnt_start * cnt_start;
             }
             else {
@@ -110,7 +124,7 @@ void speed_change()
             if (flag_key_fast == 1) {
                 // 直道和弯道不同的差速限幅
                 if (path_points[j].isturn == 1) {
-                    changed_speed = MINMAX(changed_speed, -100, 100);
+                    changed_speed = MINMAX(changed_speed, -100, 100); // 角速度环输出的changed_speed也需要限幅
                 
                     // 加少减多
                     k = fabs(aaddcc.err_dir / 50.0f);
@@ -127,7 +141,7 @@ void speed_change()
                     set_rightspeed = MINMAX(set_rightspeed, -100, 400);
                 }
                 else {
-                    changed_speed = MINMAX(changed_speed, -300, 300);
+                    changed_speed = MINMAX(changed_speed, -300, 300); // 角速度环输出的changed_speed也需要限幅
 
                     set_leftspeed = test_speed - changed_speed;
     			    set_rightspeed = test_speed + changed_speed;
@@ -137,7 +151,7 @@ void speed_change()
                 }
             }
             else {
-                changed_speed = MINMAX(changed_speed, -100, 100);
+                changed_speed = MINMAX(changed_speed, -100, 100); // 角速度环输出的changed_speed也需要限幅
                 
                 // 加少减多
                 k = fabs(aaddcc.err_dir / 40);
@@ -304,15 +318,15 @@ void encoder_clear() {
     encoder_ave = 0.0;
 }
 
-void dir_pid (float error, float last_error, float gyro) {
+void dir_pid (float error, float last_error) {
     int16 p_out, d_out, output;
     
     p_out = (int16)((kpa / 10) * error + (kpb / 10000) * error * error * error);
 
-	d_out = (int16)(kd * (error - last_error)) + (int16)(kd_imu / 100.0 * gyro);
+	d_out = (int16)(kd * (error - last_error)); // 删除kd_imu项
     output = p_out + d_out;
 
-    changed_speed = output;
+    target_gyro_z = -(float)output; // 方向环输出期望角速度
 }
 
 void dir_pid_sep (float error, float last_error) {
@@ -326,6 +340,20 @@ void dir_pid_sep (float error, float last_error) {
         output = kp_direction_3 * error + kd_direction_3 * (error - last_error);
 	
     changed_speed = output;
+}
+
+//****************************************
+// 函数简介 角速度PD闭环控制
+// 参数说明 void
+// 参数说明 无
+// 返回参数 无
+// 使用示例 gyro_pd_control();
+//****************************************
+void gyro_pd_control(void) {
+    gyro_last_err = gyro_err;
+    gyro_err = target_gyro_z - gyro_z; // 期望角速度 - 实际角速度
+
+    changed_speed = (int16)(-kp_gyro * gyro_err - kd_gyro * (gyro_err - gyro_last_err));
 }
 
 //****************************************

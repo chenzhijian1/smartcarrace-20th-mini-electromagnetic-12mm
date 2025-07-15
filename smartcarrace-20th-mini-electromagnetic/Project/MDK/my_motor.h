@@ -52,8 +52,9 @@ void encoder_get(void);
 void encoder();
 void encoder_clear();
 void motor_struct_parameter_init(motor_struct *sptr, int16 sspeed);
-void dir_pid (float, float, float);
+void dir_pid (float, float);
 void dir_pid_sep (float, float);
+void gyro_pd_control(void); // 新增角速度PD控制函数
 void motor_driver_init_dr(void);
 void motor_driver_init_ir(void);
 void motor_driver_open_out(void);
@@ -84,6 +85,12 @@ extern float kpa; //三次函数拟合方向环
 extern float kpb;
 extern float kd; // 两次误差之差
 extern float kd_imu; // 陀螺仪
+
+extern float kp_gyro; // 角速度环的pd
+extern float kd_gyro;
+extern float target_gyro_z; // 期望角速度
+extern float gyro_err;      // 角速度环当前误差
+extern float gyro_last_err; // 角速度环前一次误差
 
 extern motor_struct motor_left, motor_right;
 extern set_leftspeed;

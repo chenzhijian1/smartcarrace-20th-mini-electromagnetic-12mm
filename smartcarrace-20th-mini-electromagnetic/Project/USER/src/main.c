@@ -106,11 +106,12 @@ void main(void)
 		
  		if (send_flag) {
  			send_flag = 0;
- 			printf("%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,",
- 					kpa, kpb, kd, kd_imu,
- 					motor_left.Kp_motor, motor_left.Ki_motor);
-			
- 			printf("%.2f,", aaddcc.err_dir);
+            printf("%.1f,%.1f,%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,",
+                   kpa, kpb, kd, kd_imu,
+                   kp_gyro, kd_gyro,
+                   motor_left.Kp_motor, motor_left.Ki_motor);
+
+            printf("%.2f,%.1f,", aaddcc.err_dir, target_gyro_z);
 
  			// printf("%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,",
  			// 		motor_left.setspeed, motor_left.encoder_data,
@@ -121,7 +122,7 @@ void main(void)
  			// 		s,
  			// 		normal_speed);
 
-            printf("%d,%d,%d,%d,%d,%d,%.1f,%.1f,",
+            printf("%d,%d,%d,%d,%d,%d,%.1f,",
                     motor_left.setspeed, motor_left.encoder_data,
                     motor_right.setspeed, motor_right.encoder_data,
                     motor_left.duty1,
@@ -134,7 +135,7 @@ void main(void)
 			
  			// printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
 
-            printf("%.1f\r\n", imu660ra_gyro_z / 16.4);
+            printf("%.1f\r\n", gyro_z);
             // printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z / 16.4);
  		}
         // if (send_flag_nav && path_point_count < path_point_count_threshold) {
