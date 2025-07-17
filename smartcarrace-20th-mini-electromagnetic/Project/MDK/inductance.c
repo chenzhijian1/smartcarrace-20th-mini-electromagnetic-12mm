@@ -109,16 +109,11 @@ void direction_adc_get(void)
     // }
     
     // 环岛判断 五电感
-    if (flag == 0 && flag1 == 0 && AD_ONE[2] >= 60) {
+    // if (flag == 0 && flag1 == 0 && AD_ONE[2] >= 60) {
+    if (flag == 0 && ((AD_ONE[0] >= 20 && AD_ONE[3] >= 20 && AD_ONE[2] >= 35 && AD_ONE[1] <= 40 && AD_ONE[4] <= 40))) {
 		encoder_temp = encoder_ave;
 		flag = 1;
     }
-
-    // 十字
-    // if (flag == 0 && AD_ONE[1] > 30 && AD_ONE[4] > 30) {
-    //     encoder_temp = encoder_ave;
-    //     flag = 6;
-    // }
 
     // 差比和计算
     aaddcc.last_err_dir = aaddcc.err_dir;

@@ -2,24 +2,27 @@
 #include "pid.h"
 //******************* 需要调的参数********************/
 // 环岛
+#define huandao_num 1 // 环岛个数
 uint8 huandao_count = 0; // 环岛计数
-uint8 huandao_directions[huandao_num] = {0, 1, 1};      // 0 表示左环岛, 1 表示右环岛
+uint8 huandao_directions[huandao_num] = {0};      // 0 表示左环岛, 1 表示右环岛
 // float huandao_hight_speed[huandao_num] = {190, 170, 0, 0}; // 第n个环岛高速轮
 // float huandao_low_speed[huandao_num] = {65, 75, 75, 0};   // 第n个环岛低速轮
-uint16 huandao_r[huandao_num] = {300, 300, 300}; // 第n个环岛半径
+uint16 huandao_r[huandao_num] = {350}; // 第n个环岛半径
+// const uint16 r_out = 800; // 出环半径
+float ratio = 0;
 uint8 flag2 = 0;
 
-const int d = 140; // 车宽
+const uint16 d = 156; // 车宽
 
-float distance_before_huandao = 150;
-float distance_after_huandao = 150;
+float distance_before_huandao = 210;
+float distance_after_huandao = 230;
 float angle_in_threshold = 30; // 环岛入口角度阈值
 float angle_out_threshold = 30; // 环岛出口角度阈值
 
 // 速度
-float normal_speed = 0;
-float speed_huandao = 0;
-float normal_speed_cal = 0;
+int16 normal_speed = 0;
+int16 speed_huandao = 0;
+int16 normal_speed_cal = 0;
 
 // 旧方向环
 float kp_direction = 5; // 方向环的pid
@@ -30,22 +33,22 @@ float kp_direction_3 = 5;
 float kd_direction_3 = 11;
 
 // 新方向环
-float kpa = 9.0f;
-float kpb = 25.0f;
-float kd = 130.0f;
+float kpa = 70.0f;
+float kpb = 45.0f;
+float kd = 150.0f;
 float kd_imu = 0;
 
 // 角速度环
-float kp_gyro = 0.4f; // 角速度环的pd
-float kd_gyro = 0.1f;
+float kp_gyro = 0.54f; // 角速度环的pd
+float kd_gyro = 0.45f;
 float target_gyro_z = 0.0f; // 期望角速度
 float gyro_err = 0.0f;      // 角速度环当前误差
 float gyro_last_err = 0.0f; // 角速度环前一次误差
 
 // 电机速度环
-float kp_motor = 20;
-float ki_motor = 3.5;
-float kd_motor = 0.0;
+float kp_motor = 20.0f;
+float ki_motor = 6.0f;
+float kd_motor = 0.0f;
 
 uint8 flag = 0; // 0: 正常模式；1: 预环岛模式；2: 环岛模式；3: 出环调整；4: 障碍模式；5: 坡道模式
 uint8 flag_stop = 0; // 0: 未停止；1: 停止
@@ -55,10 +58,10 @@ uint8 flag_start = 0; // 0: 未开始快速循迹；1: 开始快速循迹
 uint8 cnt_start = 0;
 uint8 cnt_stop = 0;
 
-float test_speed = 0;       // setspeed
+int16 test_speed = 0;       // setspeed
 int16 changed_speed = 0;
-int set_leftspeed = 0;
-int set_rightspeed = 0;
+int16 set_leftspeed = 0;
+int16 set_rightspeed = 0;
 // 编码器积分值
 float encoder_left = 0.0;
 float encoder_right = 0.0;
@@ -94,6 +97,7 @@ void speed_change()
         // if (flag_key_fast == 1)  fast_tracking();
         // else
         //     if (normal_speed != 0)  Path_record();
+        
         if (imu660ra_gyro_z <= 4 && imu660ra_gyro_z >= -4)
             imu660ra_gyro_z = 0;
         gyro_z = gyro_z * lpf_gyro + (float)imu660ra_gyro_z / 16.4f * (1 - lpf_gyro); // 陀螺仪低通滤波
@@ -112,14 +116,14 @@ void speed_change()
             // 速度策略
             if (flag_start && cnt_start < 150) {
                 cnt_start++;
-                normal_speed_cal = normal_speed / (150 * 150) * cnt_start * cnt_start;
+                normal_speed_cal = (int16)normal_speed / (150 * 150) * cnt_start * cnt_start;
             }
             else {
                 flag_start = 0;
-                normal_speed_cal = -s * aaddcc.err_dir * aaddcc.err_dir + normal_speed;
+                normal_speed_cal = (int16)-s * aaddcc.err_dir * aaddcc.err_dir + normal_speed;
             }
 
-            test_speed = normal_speed_cal;
+            test_speed = (int16)normal_speed_cal;
 
             if (flag_key_fast == 1) {
                 // 直道和弯道不同的差速限幅
@@ -154,7 +158,7 @@ void speed_change()
                 changed_speed = MINMAX(changed_speed, -100, 100); // 角速度环输出的changed_speed也需要限幅
                 
                 // 加少减多
-                k = fabs(aaddcc.err_dir / 40);
+                k = fabs(aaddcc.err_dir / 50.0f);
                 if (changed_speed > 0) {
                     set_leftspeed = test_speed - changed_speed * (1 + k);
                     set_rightspeed = test_speed + changed_speed;
@@ -190,10 +194,13 @@ void speed_change()
                 flag_set_angle = 1;
             }
 
-            if (flag_huandao == 0) { // 左环岛
-                target_angle_out = target_angle_in - 360; // 目标出环角度
+            // 环岛差速计算
+            ratio = (float)(huandao_r[huandao_count] - (d/2)) / (float)(huandao_r[huandao_count] + (d/2));
 
-                set_leftspeed = normal_speed * (huandao_r[huandao_count] - (d/2)) / (huandao_r[huandao_count] + (d/2));
+            if (flag_huandao == 0) { // 左环岛
+                target_angle_out = target_angle_in - 280; // 目标出环角度
+
+                set_leftspeed = (int16)(normal_speed * ratio);
                 set_rightspeed = normal_speed;
 
                 if (yaw < target_angle_out) {
@@ -202,10 +209,10 @@ void speed_change()
                 }
             }
             else { // 右环岛
-                target_angle_out = target_angle_in + 360; // 目标出环角度
+                target_angle_out = target_angle_in + 280; // 目标出环角度
                 
                 set_leftspeed = normal_speed;
-                set_rightspeed = normal_speed * (huandao_r[huandao_count] - (d/2)) / (huandao_r[huandao_count] + (d/2));
+                set_rightspeed = (int16)(normal_speed * ratio);
 
                 if (yaw > target_angle_out) {
                     flag = 3; // 出环
@@ -216,8 +223,18 @@ void speed_change()
 
         case 3: // 出环
             if (encoder_ave - encoder_temp <= distance_after_huandao) {
-				set_leftspeed = normal_speed;
-				set_rightspeed = normal_speed;
+                // if (flag_huandao == 0) { // 左环岛
+                //     set_leftspeed = normal_speed * (r_out - (d/2)) / (r_out + (d/2));
+                //     // set_leftspeed = normal_speed * 0.9;
+				//     set_rightspeed = normal_speed;
+                // }
+				// else { // 右环岛
+                //     set_leftspeed = normal_speed;
+				//     set_rightspeed = normal_speed * (r_out - (d/2)) / (r_out + (d/2));
+                //     // set_rightspeed = normal_speed * 0.9;
+				// }
+                set_leftspeed = normal_speed;
+                set_rightspeed = normal_speed;
 			}
 			else {
 				// 恢复到正常循迹
@@ -232,7 +249,7 @@ void speed_change()
 				// cnt_circle_out = 0;
 				flag_circle_out = 0;
 
-                huandao_count++;
+                huandao_count = (huandao_count + 1) % huandao_num; // 切换环岛
             }
             break;
 
@@ -247,7 +264,7 @@ void speed_change()
         case 5: // 慢速停车
             if (cnt_stop < 200) {
                 cnt_stop++;
-                normal_speed_cal = normal_speed / 200 * (200 - cnt_stop);
+                normal_speed_cal = (int16)normal_speed / 200 * (200 - cnt_stop);
                 set_leftspeed = normal_speed_cal;
                 set_rightspeed = normal_speed_cal;
             }
@@ -258,14 +275,6 @@ void speed_change()
                 set_rightspeed = 0;
                 flag_key_control = 0;
             }
-        
-        case 6: // 十字
-            if (encoder_ave >= 130)  flag = 0;
-
-            set_leftspeed = normal_speed_cal;
-            set_rightspeed = normal_speed_cal;
-
-            break;
 
         default:
             break;

@@ -22,13 +22,13 @@ void Path_record(void)
     // 判断是否需要记录路径点 (角速度超过阈值)
     if (flag_isturn == 0) {
         if ((path_point_count < MAX_PATH_POINTS - 1) && (abs(imu660ra_gyro_z) / 16.4f > gyro_threshold_high)
-             && fabs(yaw) >= angle_turn && encoder_ave > distance_min && fabs(aaddcc.err_dir) <= err_straight) {
+             && fabs(yaw) >= angle_turn && encoder_ave > distance_min) {
             Point_record();
         }
     }
     else {
         if ((path_point_count < MAX_PATH_POINTS - 1) && (abs(imu660ra_gyro_z) / 16.4f < gyro_threshold_low)
-             && encoder_ave > distance_min && fabs(aaddcc.err_dir) >= err_turn) {
+             && encoder_ave > distance_min) {
             Point_record();
         }
     }

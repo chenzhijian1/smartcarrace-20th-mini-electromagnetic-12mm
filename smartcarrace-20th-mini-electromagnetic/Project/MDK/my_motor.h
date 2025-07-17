@@ -2,7 +2,6 @@
 #define __MY_MOTOR_H
 #include "headfile.h"
 
-#define huandao_num 3 // 环岛个数
 extern uint8 huandao_count;
 
 #define MINN(a, b) (((a) < (b)) ? (a) : (b))
@@ -73,7 +72,8 @@ extern float kp_motor; //电机闭环
 extern float ki_motor;
 extern float kd_motor;
 
-extern float test_speed;
+extern int16 test_speed;
+
 extern float kp_direction; // 方向环的pid
 extern float kd_direction;
 extern float kp_direction_2; // 方向环的pid
@@ -93,8 +93,8 @@ extern float gyro_err;      // 角速度环当前误差
 extern float gyro_last_err; // 角速度环前一次误差
 
 extern motor_struct motor_left, motor_right;
-extern set_leftspeed;
-extern set_rightspeed;
+extern int16 set_leftspeed;
+extern int16 set_rightspeed;
 
 extern uint8 flag;
 extern uint8 flag_stop;
@@ -108,8 +108,8 @@ extern float target_angle_out;
 
 extern float encoder_ave;
 extern float encoder_temp;
-extern float normal_speed;
-extern float speed_huandao;
+extern int16 normal_speed;
+extern int16 speed_huandao;
 extern float huandao_hight_speed[4];
 extern float huandao_low_speed[4];
 extern float hightv_huandao;

@@ -841,7 +841,7 @@ void ips114_show(void)
 
     ips114_showstr(0, 6, "actual");
     ips114_showint16(60, 6, motor_left.encoder_data);
-    ips114_showint16(120, 6, motor_right.encoder_data);  //�?名其妙就反了
+    ips114_showint16(120, 6, motor_right.encoder_data);
 
 //    ips114_showstr(0, 7, "speed");
 ////  ips114_showuint8(50, 7, count_flag_4);

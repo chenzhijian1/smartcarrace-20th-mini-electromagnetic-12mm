@@ -28,7 +28,7 @@ void main(void)
 
     pit_timer_ms(TIM_1, 5);  // 电感、陀螺仪、编码器、串口
     pit_timer_ms(TIM_4, 5);  // 电机、电压检测、路径记忆
-    // DataInit();
+    // DataInit(); 
 
     // 旧方向环
     // kp_direction = 0.5f;
@@ -52,17 +52,19 @@ void main(void)
 //     speed_huandao = 150.0f; // 环岛速度
 // //	s = 0.27f; // 速度策略系数
 // 	s = 0.0f;
+
+    // normal_speed = 200.0f;    // 运行速度
 	
 //     // 电感系数
-	A_ = 1.0;
-	B_ = 3.0;
-	C_ = 0.4;
-	
+	A_ = 1.0f;
+	B_ = 4.0f;
+	C_ = 0.4f;
+
     // 使能全局中断
     EA = 1;
-    
+
     while(1) {
-		if(P75 == 0) // 调参模式 开关在上
+        if(P75 == 0) // 调参模式 开关在上
         {
             flag_key_control = 1;
             // key_scan();
@@ -98,6 +100,7 @@ void main(void)
         if (KEY3_PIN == 0) // 重置   从上往下第四个
         {
         	refresh();
+            huandao_count = 0;
             j = 1;
             flag_end = 0;
         }
@@ -122,7 +125,7 @@ void main(void)
  			// 		s,
  			// 		normal_speed);
 
-            printf("%d,%d,%d,%d,%d,%d,%.1f,",
+            printf("%d,%d,%d,%d,%d,%d,%d,",
                     motor_left.setspeed, motor_left.encoder_data,
                     motor_right.setspeed, motor_right.encoder_data,
                     motor_left.duty1,
@@ -135,7 +138,9 @@ void main(void)
 			
  			// printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
 
-            printf("%.1f\r\n", gyro_z);
+            printf("%.1f,", gyro_z);
+
+            printf("%.1f,%.1f\r\n", distance_before_huandao, distance_after_huandao);
             // printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z / 16.4);
  		}
         // if (send_flag_nav && path_point_count < path_point_count_threshold) {

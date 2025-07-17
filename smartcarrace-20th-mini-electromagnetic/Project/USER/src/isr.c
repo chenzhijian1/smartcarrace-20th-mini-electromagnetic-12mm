@@ -248,7 +248,7 @@ void UART4_Isr() interrupt 18
 						motor_right.Ki_motor = ki_motor;
                         break;
 					case 'n':
-						normal_speed = value;
+						normal_speed = (int)value;
 						break;
 					case 's':
 						s = value;
@@ -264,6 +264,12 @@ void UART4_Isr() interrupt 18
 						break;
                     case 'm':
                         path_point_count_threshold = value;
+                        break;
+                    case 'x':
+                        distance_before_huandao = value;
+                        break;
+                    case 'y':
+                        distance_after_huandao = value;
                         break;
                 }
             }
