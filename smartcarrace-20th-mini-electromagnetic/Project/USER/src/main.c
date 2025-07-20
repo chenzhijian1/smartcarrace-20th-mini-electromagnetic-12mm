@@ -18,9 +18,9 @@ void main(void)
     encoder_init();       // 编码器
     direction_adc_init(); // 电感     
     motor_driver_init_ir();  // 电机
-//	motor_driver_init_dr();
+	// motor_driver_init_dr();
     imu660ra_init();      // 陀螺仪
-//	offset_init();        // 零漂
+	// offset_init();        // 零漂
     wireless_uart_init(); // 无线串口
 	voltage_init();       // 电压检测
 	
@@ -57,7 +57,7 @@ void main(void)
 	
 //     // 电感系数
 	A_ = 1.0f;
-	B_ = 4.0f;
+	B_ = 3.0f;
 	C_ = 0.4f;
 
     // 使能全局中断

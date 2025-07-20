@@ -129,6 +129,11 @@ void direction_adc_get(void)
                   
         aaddcc.err_dir = 50 * ((adc_left_dir - adc_right_dir) / (adc_left_dir + adc_right_dir));
     }
+    
+    // 十字补偿 12mm的车中间电感坏了，暂时不用
+    // if (flag == 0 && AD_ONE[2] < 13) 
+    //     aaddcc.err_dir *= (1 + (13 - AD_ONE[2]) * 0.1);
+
 //	else {
 //		aaddcc.err_dir = 20 * (A_ * (AD_ONE[0] - AD_ONE[3]) + B_ * (AD_ONE[1] - AD_ONE[4])) /
 //							  (A_ * (AD_ONE[0] + AD_ONE[3]) + C_ * fabs(AD_ONE[1] - AD_ONE[4]));

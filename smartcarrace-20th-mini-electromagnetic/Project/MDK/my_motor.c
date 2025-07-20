@@ -21,6 +21,7 @@ float angle_out_threshold = 30; // 环岛出口角度阈值
 
 // 速度
 int16 normal_speed = 0;
+int16 normal_speed_pre = 0;
 int16 speed_huandao = 0;
 int16 normal_speed_cal = 0;
 
@@ -33,21 +34,21 @@ float kp_direction_3 = 5;
 float kd_direction_3 = 11;
 
 // 新方向环
-float kpa = 70.0f;
-float kpb = 45.0f;
+float kpa = 80.0f;
+float kpb = 70.0f;
 float kd = 150.0f;
 float kd_imu = 0;
 
 // 角速度环
-float kp_gyro = 0.54f; // 角速度环的pd
+float kp_gyro = 0.9f; // 角速度环的pd
 float kd_gyro = 0.45f;
 float target_gyro_z = 0.0f; // 期望角速度
 float gyro_err = 0.0f;      // 角速度环当前误差
 float gyro_last_err = 0.0f; // 角速度环前一次误差
 
 // 电机速度环
-float kp_motor = 20.0f;
-float ki_motor = 6.0f;
+float kp_motor = 14.0f;
+float ki_motor = 7.0f;
 float kd_motor = 0.0f;
 
 uint8 flag = 0; // 0: 正常模式；1: 预环岛模式；2: 环岛模式；3: 出环调整；4: 障碍模式；5: 坡道模式
@@ -82,7 +83,7 @@ float target_angle_out = 0;
 motor_struct motor_left, motor_right; // 定义电机速度闭环变量
 
 float k;
-float s;
+float s = 0;
 
 float gyro_z;
 
@@ -90,8 +91,8 @@ uint8 time = 0;
 
 void speed_change()
 {
-    if (flag != 4)
-        car_stop_judge();
+    // if (flag == 0)
+    //     car_stop_judge();
     if (flag_stop == 0)
     {
         // if (flag_key_fast == 1)  fast_tracking();
@@ -114,15 +115,22 @@ void speed_change()
             time = (time + 1) % 2;
 
             // 速度策略
-            if (flag_start && cnt_start < 150) {
+            // if (flag_start && cnt_start < 100) {
+            if (normal_speed_pre == 0 && normal_speed != 0)
+                flag_start = 1;
+            
+            if (flag_start && cnt_start < 100) {
                 cnt_start++;
-                normal_speed_cal = (int16)normal_speed / (150 * 150) * cnt_start * cnt_start;
+                // normal_speed_cal = (int16)normal_speed / (100 * 100) * cnt_start * cnt_start;
+                normal_speed_cal = (int16)((float)normal_speed * cnt_start / 100.0f);
             }
             else {
                 flag_start = 0;
+                cnt_start = 0;
                 normal_speed_cal = (int16)-s * aaddcc.err_dir * aaddcc.err_dir + normal_speed;
             }
 
+            normal_speed_pre = normal_speed;
             test_speed = (int16)normal_speed_cal;
 
             if (flag_key_fast == 1) {
@@ -198,7 +206,7 @@ void speed_change()
             ratio = (float)(huandao_r[huandao_count] - (d/2)) / (float)(huandao_r[huandao_count] + (d/2));
 
             if (flag_huandao == 0) { // 左环岛
-                target_angle_out = target_angle_in - 280; // 目标出环角度
+                target_angle_out = target_angle_in - 330; // 目标出环角度
 
                 set_leftspeed = (int16)(normal_speed * ratio);
                 set_rightspeed = normal_speed;
@@ -209,7 +217,7 @@ void speed_change()
                 }
             }
             else { // 右环岛
-                target_angle_out = target_angle_in + 280; // 目标出环角度
+                target_angle_out = target_angle_in + 330; // 目标出环角度
                 
                 set_leftspeed = normal_speed;
                 set_rightspeed = (int16)(normal_speed * ratio);
@@ -309,9 +317,9 @@ void encoder_get(void) {
     ctimer_count_clean(SPEEDL_PULSE);
     ctimer_count_clean(SPEEDR_PULSE);
 
-    if (SPEEDL_DIR == 0) //观察屏幕输出调整
+    if (SPEEDL_DIR == 1) //观察屏幕输出调整
         motor_left.encoder_data = -motor_left.encoder_data;
-    if (SPEEDR_DIR == 1)
+    if (SPEEDR_DIR == 0)
         motor_right.encoder_data = -motor_right.encoder_data;
 }
 
@@ -454,33 +462,33 @@ int16 motor_closed_loop_control(motor_struct *sptr) {
 // 使用示例 motor_control(motor_left);
 //****************************************
 void motor_control(int16 speed_l, int16 speed_r) {
-	if (normal_speed == 0) {
-		motor_left.setspeed = 0;
-		motor_right.setspeed = 0;
-	}
-	else {
+	// if (normal_speed == 0) {
+	// 	motor_left.setspeed = 0;
+	// 	motor_right.setspeed = 0;
+	// }
+	// else {
 		motor_left.setspeed = speed_l;
 		motor_right.setspeed = speed_r;
-	}
+	// }
 
     motor_closed_loop_control(&motor_left);
     motor_closed_loop_control(&motor_right);
 	
     // 12mm
-    // motor_left.duty1 = motor_left.setspeed < 1000 ? 
-    //                    motor_left.setspeed * 1000 / 65 + motor_left.out_motor_pid :
-    //                    1000 + (motor_left.setspeed - 65) * 10 + motor_left.out_motor_pid;
-    // motor_right.duty1 = motor_right.setspeed < 1000 ? 
-    //                     motor_right.setspeed * 1000 / 65 + motor_right.out_motor_pid :
-    //                     1000 + (motor_right.setspeed - 65) * 10 + motor_right.out_motor_pid;
+    motor_left.duty1 = motor_left.setspeed < 1000 ? 
+                       motor_left.setspeed * 1000 / 65 + motor_left.out_motor_pid :
+                       1000 + (motor_left.setspeed - 65) * 10 + motor_left.out_motor_pid;
+    motor_right.duty1 = motor_right.setspeed < 1000 ? 
+                        motor_right.setspeed * 1000 / 65 + motor_right.out_motor_pid :
+                        1000 + (motor_right.setspeed - 65) * 10 + motor_right.out_motor_pid;
 
     // 19mm
-    motor_left.duty1 = motor_left.setspeed < 1000 ? 
-                        motor_left.setspeed * 1000 / 65 + motor_left.out_motor_pid :
-                        1000 + (motor_left.setspeed - 65) / 40 * 500 + motor_left.out_motor_pid;
-    motor_right.duty1 = motor_right.setspeed < 1000 ? 
-                         motor_right.setspeed * 1000 / 45 + motor_right.out_motor_pid :
-                         1000 + (motor_right.setspeed - 45) / 40 * 500 + motor_right.out_motor_pid;
+    // motor_left.duty1 = motor_left.setspeed < 1000 ? 
+    //                     motor_left.setspeed * 1000 / 65 + motor_left.out_motor_pid :
+    //                     1000 + (motor_left.setspeed - 65) / 40 * 500 + motor_left.out_motor_pid;
+    // motor_right.duty1 = motor_right.setspeed < 1000 ? 
+    //                      motor_right.setspeed * 1000 / 45 + motor_right.out_motor_pid :
+    //                      1000 + (motor_right.setspeed - 45) / 40 * 500 + motor_right.out_motor_pid;
 	
 	// motor_left.duty1 = 2000;
 	// motor_right.duty1 = 1000;
