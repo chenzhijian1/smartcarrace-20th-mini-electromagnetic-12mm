@@ -55,10 +55,20 @@ void main(void)
 
     // normal_speed = 200.0f;    // 运行速度
 	
-//     // 电感系数
-	A_ = 1.0f;
-	B_ = 3.0f;
-	C_ = 0.4f;
+    // 电感系数逐飞
+	// A_ = 1.0f;
+	// B_ = 3.0f;
+	// C_ = 0.4f;
+
+    // 电感系数差比和差
+    // A_ = 1.2f;
+	// B_ = 1.7f;
+	// C_ = 0.5f;
+
+    // 电感系数差比和差
+    A_ = 1.0f;
+    B_ = 1.0f;
+    C_ = 1.0f;
 
     // 使能全局中断
     EA = 1;
@@ -140,7 +150,9 @@ void main(void)
 
             printf("%.1f,", gyro_z);
 
-            printf("%.1f,%.1f\r\n", distance_before_huandao, distance_after_huandao);
+            printf("%.1f,%.1f,", distance_before_huandao, distance_after_huandao);
+
+            printf("%.1f,%.1f,%.1f\r\n", A_, B_, C_);
             // printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z / 16.4);
  		}
         // if (send_flag_nav && path_point_count < path_point_count_threshold) {

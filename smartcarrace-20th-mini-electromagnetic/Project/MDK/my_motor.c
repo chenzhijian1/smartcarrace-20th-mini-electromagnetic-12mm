@@ -7,15 +7,15 @@ uint8 huandao_count = 0; // 环岛计数
 uint8 huandao_directions[huandao_num] = {0};      // 0 表示左环岛, 1 表示右环岛
 // float huandao_hight_speed[huandao_num] = {190, 170, 0, 0}; // 第n个环岛高速轮
 // float huandao_low_speed[huandao_num] = {65, 75, 75, 0};   // 第n个环岛低速轮
-uint16 huandao_r[huandao_num] = {350}; // 第n个环岛半径
+uint16 huandao_r[huandao_num] = {300}; // 第n个环岛半径
 // const uint16 r_out = 800; // 出环半径
 float ratio = 0;
 uint8 flag2 = 0;
 
-const uint16 d = 156; // 车宽
+const uint16 d = 165; // 车宽
 
-float distance_before_huandao = 210;
-float distance_after_huandao = 230;
+float distance_before_huandao = 140;
+float distance_after_huandao = 170;
 float angle_in_threshold = 30; // 环岛入口角度阈值
 float angle_out_threshold = 30; // 环岛出口角度阈值
 
@@ -34,21 +34,21 @@ float kp_direction_3 = 5;
 float kd_direction_3 = 11;
 
 // 新方向环
-float kpa = 80.0f;
-float kpb = 70.0f;
+float kpa = 60.0f;
+float kpb = 100.0f;
 float kd = 150.0f;
 float kd_imu = 0;
 
 // 角速度环
-float kp_gyro = 0.9f; // 角速度环的pd
-float kd_gyro = 0.45f;
+float kp_gyro = 1.1f; // 1.1  1.1
+float kd_gyro = 1.0f; // 1    0.8
 float target_gyro_z = 0.0f; // 期望角速度
 float gyro_err = 0.0f;      // 角速度环当前误差
 float gyro_last_err = 0.0f; // 角速度环前一次误差
 
 // 电机速度环
-float kp_motor = 14.0f;
-float ki_motor = 7.0f;
+float kp_motor = 5.0f;
+float ki_motor = 2.2f;
 float kd_motor = 0.0f;
 
 uint8 flag = 0; // 0: 正常模式；1: 预环岛模式；2: 环岛模式；3: 出环调整；4: 障碍模式；5: 坡道模式
@@ -91,8 +91,8 @@ uint8 time = 0;
 
 void speed_change()
 {
-    // if (flag == 0)
-    //     car_stop_judge();
+    if (flag == 0)
+        car_stop_judge();
     if (flag_stop == 0)
     {
         // if (flag_key_fast == 1)  fast_tracking();
@@ -107,7 +107,7 @@ void speed_change()
         {
         case 0: // 正常模式
 //            if(fabs(aaddcc.err_dir) < 1 && fabs(aaddcc.last_err_dir) < 1 && !(aaddcc.err_dir ==0 && aaddcc.last_err_dir ==0 ))
-//            				test_speed += 0.001;
+           				// test_speed += 0.001;
             if (time == 0)
                 dir_pid(aaddcc.err_dir, aaddcc.last_err_dir); // 方向环输出期望角速度target_gyro_z
             gyro_pd_control(); // 角速度环计算changed_speed
@@ -163,7 +163,7 @@ void speed_change()
                 }
             }
             else {
-                changed_speed = MINMAX(changed_speed, -100, 100); // 角速度环输出的changed_speed也需要限幅
+                changed_speed = MINMAX(changed_speed, -120, 120); // 角速度环输出的changed_speed也需要限幅
                 
                 // 加少减多
                 k = fabs(aaddcc.err_dir / 50.0f);
@@ -206,7 +206,7 @@ void speed_change()
             ratio = (float)(huandao_r[huandao_count] - (d/2)) / (float)(huandao_r[huandao_count] + (d/2));
 
             if (flag_huandao == 0) { // 左环岛
-                target_angle_out = target_angle_in - 330; // 目标出环角度
+                target_angle_out = target_angle_in - 340; // 目标出环角度
 
                 set_leftspeed = (int16)(normal_speed * ratio);
                 set_rightspeed = normal_speed;
@@ -217,7 +217,7 @@ void speed_change()
                 }
             }
             else { // 右环岛
-                target_angle_out = target_angle_in + 330; // 目标出环角度
+                target_angle_out = target_angle_in + 340; // 目标出环角度
                 
                 set_leftspeed = normal_speed;
                 set_rightspeed = (int16)(normal_speed * ratio);
@@ -317,9 +317,9 @@ void encoder_get(void) {
     ctimer_count_clean(SPEEDL_PULSE);
     ctimer_count_clean(SPEEDR_PULSE);
 
-    if (SPEEDL_DIR == 1) //观察屏幕输出调整
+    if (SPEEDL_DIR == 0) //观察屏幕输出调整
         motor_left.encoder_data = -motor_left.encoder_data;
-    if (SPEEDR_DIR == 0)
+    if (SPEEDR_DIR == 1)
         motor_right.encoder_data = -motor_right.encoder_data;
 }
 
@@ -462,14 +462,14 @@ int16 motor_closed_loop_control(motor_struct *sptr) {
 // 使用示例 motor_control(motor_left);
 //****************************************
 void motor_control(int16 speed_l, int16 speed_r) {
-	// if (normal_speed == 0) {
-	// 	motor_left.setspeed = 0;
-	// 	motor_right.setspeed = 0;
-	// }
-	// else {
+	if (normal_speed == 0) {
+		motor_left.setspeed = 0;
+		motor_right.setspeed = 0;
+	}
+	else {
 		motor_left.setspeed = speed_l;
 		motor_right.setspeed = speed_r;
-	// }
+	}
 
     motor_closed_loop_control(&motor_left);
     motor_closed_loop_control(&motor_right);
@@ -511,10 +511,10 @@ void encoder_init(void) {
 
 // 电机初始化
 void motor_driver_init_ir(void) {                                                
-    pwm_init(PWMA_CH1P_P60, 12500, 0);           // 初始化PWM1  使用P60引脚  初始化频率为17Khz
-    pwm_init(PWMA_CH2P_P62, 12500, 0);           // 初始化PWM2  使用P62引脚  初始化频率为17Khz
-    pwm_init(PWMA_CH3P_P64, 12500, 0);           // 初始化PWM3  使用P64引脚  初始化频率为17Khz
-    pwm_init(PWMA_CH4P_P66, 12500, 0);           // 初始化PWM4  使用P66引脚  初始化频率为17Khz
+    pwm_init(PWMA_CH1P_P60, 17000, 0);           // 初始化PWM1  使用P60引脚  初始化频率为17Khz
+    pwm_init(PWMA_CH2P_P62, 17000, 0);           // 初始化PWM2  使用P62引脚  初始化频率为17Khz
+    pwm_init(PWMA_CH3P_P64, 17000, 0);           // 初始化PWM3  使用P64引脚  初始化频率为17Khz
+    pwm_init(PWMA_CH4P_P66, 17000, 0);           // 初始化PWM4  使用P66引脚  初始化频率为17Khz
     motor_struct_parameter_init(&motor_left, 0); // 速度环结构体参数初始化
     motor_struct_parameter_init(&motor_right, 0);
 }
