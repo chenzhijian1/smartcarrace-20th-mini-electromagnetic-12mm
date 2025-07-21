@@ -34,9 +34,9 @@ float kp_direction_3 = 5;
 float kd_direction_3 = 11;
 
 // 新方向环
-float kpa = 60.0f;
-float kpb = 100.0f;
-float kd = 150.0f;
+float kpa = 80.0f;
+float kpb = 140.0f;
+float kd = 130.0f;
 float kd_imu = 0;
 
 // 角速度环
