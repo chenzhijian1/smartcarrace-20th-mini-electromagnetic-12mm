@@ -35,7 +35,7 @@ float kd_direction_3 = 11;
 
 // 新方向环
 float kpa = 10.0f; // 25 27
-float kpb = 6.0f; // 25 30
+float kpb = 10.0f; // 25 30
 float kd = 100.0f; // 100 110
 float kd_imu = 0.0f;
 

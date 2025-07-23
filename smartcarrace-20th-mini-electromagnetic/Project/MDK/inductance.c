@@ -120,19 +120,19 @@ void direction_adc_get(void)
     aaddcc.last_err_dir = aaddcc.err_dir;
 
     if (AD_ONE[0] + AD_ONE[1] + AD_ONE[3] + AD_ONE[4] < 4)
-        aaddcc.err_dir = 0;
+        aaddcc.err_dir = aaddcc.last_err_dir;
 
     // else {
     //     adc_left_dir = sqrt(A_ * AD_ONE[0] * AD_ONE[0] + B_ * AD_ONE[1] * AD_ONE[1]);
 	// 	adc_right_dir = sqrt(A_ * AD_ONE[3] * AD_ONE[3] + B_ *   AD_ONE[4] * AD_ONE[4]);
 	// 	//adc_left_dir = sqrt(AD_ONE[0] * AD_ONE[0]);
-	// 	//adc_right_dir = sqrt(AD_ONE[4] * AD_ONE[4]); 
+	// 	//adc_right_dir = sqrt(AD_ONE[4 ] * AD_ONE[4]); 
                   
     //     aaddcc.err_dir = 50 * ((adc_left_dir - adc_right_dir) / (adc_left_dir + adc_right_dir));
     // }
     
 	else {
-		aaddcc.err_dir = 50 * (A_ * (AD_ONE[0] - AD_ONE[3]) + B_ * (AD_ONE[1] - AD_ONE[4])) /
+		aaddcc.err_dir = 30 * (A_ * (AD_ONE[0] - AD_ONE[3]) + B_ * (AD_ONE[1] - AD_ONE[4])) /
 							  (A_ * (AD_ONE[0] + AD_ONE[3]) + C_ * fabs(AD_ONE[1] - AD_ONE[4]));
 	}
     
