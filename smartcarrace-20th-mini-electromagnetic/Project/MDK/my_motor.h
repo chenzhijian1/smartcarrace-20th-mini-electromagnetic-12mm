@@ -51,7 +51,7 @@ void encoder_get(void);
 void encoder();
 void encoder_clear();
 void motor_struct_parameter_init(motor_struct *sptr, int16 sspeed);
-void dir_pid (float, float);
+void dir_pid (float, float, float);
 void dir_pid_sep (float, float);
 void gyro_pd_control(void); // 新增角速度PD控制函数
 void motor_driver_init_dr(void);

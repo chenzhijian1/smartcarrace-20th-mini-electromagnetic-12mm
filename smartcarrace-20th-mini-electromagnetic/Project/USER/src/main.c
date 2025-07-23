@@ -57,18 +57,21 @@ void main(void)
 	
     // 电感系数逐飞
 	// A_ = 1.0f;
-	// B_ = 3.0f;
-	// C_ = 0.4f;
+	// B_ = 5.0f;
+	// C_ = 0.0f;
 
     // 电感系数差比和差
-    A_ = 1.2f;
-	B_ = 1.7f;
-	C_ = 0.5f;
+    // A_ = 1.2f; // 25 25 100
+	// B_ = 1.7f;
+	// C_ = 0.5f;
+    // A_ = 1.3f;
+    // B_ = 1.4f;
+    // C_ = 1.1f;
 
     // 电感系数差比和差
-    // A_ = 1.0f;
-    // B_ = 1.0f;
-    // C_ = 1.0f;
+    A_ = 1.0f;
+    B_ = 1.0f;
+    C_ = 1.0f;
 
     // 使能全局中断
     EA = 1;
@@ -144,7 +147,8 @@ void main(void)
 			
  			printf("%d,", voltage);
 					
- 			printf("%.1f,%.1f,%.1f,%.1f,%.1f,", AD_ONE[0],AD_ONE[1],AD_ONE[2],AD_ONE[3],AD_ONE[4]);
+ 			// printf("%.1f,%.1f,%.1f,%.1f,%.1f,", AD_ONE[0],AD_ONE[1],AD_ONE[2],AD_ONE[3],AD_ONE[4]);
+            printf("%d,%d,%d,%d,%d,", ad_ave[0], ad_ave[1], ad_ave[2], ad_ave[3], ad_ave[4]);
 			
  			// printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
 

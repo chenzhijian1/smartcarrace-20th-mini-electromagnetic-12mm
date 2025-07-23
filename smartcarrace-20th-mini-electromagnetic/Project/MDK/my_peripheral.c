@@ -797,13 +797,18 @@ void ips114_show(void)
     ips114_showstr(0, 1, "l");
     ips114_showfloat(30, 1, AD_ONE[0], 3, 2);  // 显示左电感归一化值
     ips114_showfloat(80, 1, AD_ONE[1], 3, 2); // 显示左前电感归一化值
+    // ips114_showfloat(30, 1, ad_ave[0], 3, 2);  // 显示左电感归一化值
+    // ips114_showfloat(80, 1, ad_ave[1], 3, 2); // 显示左前电感归一化值
 
     ips114_showstr(140, 1, "m");
     ips114_showfloat(170, 1, AD_ONE[2], 3, 2);  // 显示中电感归一化值
+    // ips114_showfloat(170, 1, ad_ave[2], 3, 2);  // 显示中电感归一化值
 
     ips114_showstr(0, 2, "r");
     ips114_showfloat(30, 2, AD_ONE[3], 3, 2);  // 显示右横电感归一化值
     ips114_showfloat(80, 2, AD_ONE[4], 3, 2); // 显示右前电感归一化值
+    // ips114_showfloat(30, 2, ad_ave[3], 3, 2);  // 显示右横电感归一化值
+    // ips114_showfloat(80, 2, ad_ave[4], 3, 2); // 显示右前电感归一化值
 
 //    ips114_showstr(0, 3, "cnt");
 //    ips114_showuint8(50, 3, cnt_circle_in); 		   // 显示cnt
@@ -855,7 +860,7 @@ void ips114_show(void)
 
     ips114_showstr(110, 7, "angle");
     ips114_showfloat(150, 7, yaw, 4, 2);
-	
+
 //	ips114_showstr(110, 7, "angle");
 //    ips114_showfloat(150, 7, (imu660ra_gyro_z - Gyro_offset_z) / 65.6, 4, 2);
 }

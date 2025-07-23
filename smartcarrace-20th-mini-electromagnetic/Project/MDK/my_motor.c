@@ -14,8 +14,8 @@ uint8 flag2 = 0;
 
 const uint16 d = 165; // 车宽
 
-float distance_before_huandao = 140;
-float distance_after_huandao = 170;
+float distance_before_huandao = 110;
+float distance_after_huandao = 140;
 float angle_in_threshold = 30; // 环岛入口角度阈值
 float angle_out_threshold = 30; // 环岛出口角度阈值
 
@@ -34,21 +34,21 @@ float kp_direction_3 = 5;
 float kd_direction_3 = 11;
 
 // 新方向环
-float kpa = 80.0f;
-float kpb = 140.0f;
-float kd = 130.0f;
-float kd_imu = 0;
+float kpa = 10.0f; // 25 27
+float kpb = 6.0f; // 25 30
+float kd = 100.0f; // 100 110
+float kd_imu = 0.0f;
 
 // 角速度环
-float kp_gyro = 1.1f; // 1.1  1.1
-float kd_gyro = 1.0f; // 1    0.8
+float kp_gyro = 1.3f;
+float kd_gyro = 0.7f;
 float target_gyro_z = 0.0f; // 期望角速度
 float gyro_err = 0.0f;      // 角速度环当前误差
 float gyro_last_err = 0.0f; // 角速度环前一次误差
 
-// 电机速度环
-float kp_motor = 5.0f;
-float ki_motor = 2.2f;
+// 速度环
+float kp_motor = 16.0f;
+float ki_motor = 8.0f;
 float kd_motor = 0.0f;
 
 uint8 flag = 0; // 0: 正常模式；1: 预环岛模式；2: 环岛模式；3: 出环调整；4: 障碍模式；5: 坡道模式
@@ -108,11 +108,11 @@ void speed_change()
         case 0: // 正常模式
 //            if(fabs(aaddcc.err_dir) < 1 && fabs(aaddcc.last_err_dir) < 1 && !(aaddcc.err_dir ==0 && aaddcc.last_err_dir ==0 ))
            				// test_speed += 0.001;
-            if (time == 0)
-                dir_pid(aaddcc.err_dir, aaddcc.last_err_dir); // 方向环输出期望角速度target_gyro_z
-            gyro_pd_control(); // 角速度环计算changed_speed
+            // if (time == 0)
+                dir_pid(aaddcc.err_dir, aaddcc.last_err_dir, gyro_z); // 方向环输出期望角速度target_gyro_z
+            // gyro_pd_control(); // 角速度环计算changed_speed
             
-            time = (time + 1) % 2;
+            // time = (time + 1) % 2;
 
             // 速度策略
             // if (flag_start && cnt_start < 100) {
@@ -163,19 +163,22 @@ void speed_change()
                 }
             }
             else {
-                changed_speed = MINMAX(changed_speed, -120, 120); // 角速度环输出的changed_speed也需要限幅
+                changed_speed = MINMAX(changed_speed, -90, 90); // 角速度环输出的changed_speed也需要限幅
                 
                 // 加少减多
-                k = fabs(aaddcc.err_dir / 50.0f);
-                if (changed_speed > 0) {
-                    set_leftspeed = test_speed - changed_speed * (1 + k);
-                    set_rightspeed = test_speed + changed_speed;
-                }
-                else {
-                    set_leftspeed = test_speed - changed_speed;
-                    set_rightspeed = test_speed + changed_speed * (1 + k);
-                }
-                
+                // k = fabs(aaddcc.err_dir / 50.0f);
+                // if (changed_speed > 0) {
+                //     set_leftspeed = test_speed - changed_speed * (1 + k);
+                //     set_rightspeed = test_speed + changed_speed;
+                // }
+                // else {
+                //     set_leftspeed = test_speed - changed_speed;
+                //     set_rightspeed = test_speed + changed_speed * (1 + k);
+                // }
+
+                set_leftspeed = test_speed - changed_speed;
+                set_rightspeed = test_speed + changed_speed;
+
                 set_leftspeed = MINMAX(set_leftspeed, -100, 500);
                 set_rightspeed = MINMAX(set_rightspeed, -100, 500);
             }
@@ -206,7 +209,7 @@ void speed_change()
             ratio = (float)(huandao_r[huandao_count] - (d/2)) / (float)(huandao_r[huandao_count] + (d/2));
 
             if (flag_huandao == 0) { // 左环岛
-                target_angle_out = target_angle_in - 340; // 目标出环角度
+                target_angle_out = target_angle_in - 350; // 目标出环角度
 
                 set_leftspeed = (int16)(normal_speed * ratio);
                 set_rightspeed = normal_speed;
@@ -217,7 +220,7 @@ void speed_change()
                 }
             }
             else { // 右环岛
-                target_angle_out = target_angle_in + 340; // 目标出环角度
+                target_angle_out = target_angle_in + 350; // 目标出环角度
                 
                 set_leftspeed = normal_speed;
                 set_rightspeed = (int16)(normal_speed * ratio);
@@ -317,9 +320,9 @@ void encoder_get(void) {
     ctimer_count_clean(SPEEDL_PULSE);
     ctimer_count_clean(SPEEDR_PULSE);
 
-    if (SPEEDL_DIR == 0) //观察屏幕输出调整
+    if (SPEEDL_DIR == 1) //观察屏幕输出调整
         motor_left.encoder_data = -motor_left.encoder_data;
-    if (SPEEDR_DIR == 1)
+    if (SPEEDR_DIR == 0)
         motor_right.encoder_data = -motor_right.encoder_data;
 }
 
@@ -335,15 +338,16 @@ void encoder_clear() {
     encoder_ave = 0.0;
 }
 
-void dir_pid (float error, float last_error) {
+void dir_pid (float error, float last_error, float gyro) {
     int16 p_out, d_out, output;
     
     p_out = (int16)((kpa / 10) * error + (kpb / 10000) * error * error * error);
 
-	d_out = (int16)(kd * (error - last_error)); // 删除kd_imu项
+	d_out = (int16)(kd * (error - last_error)) + (int16)(kd_imu / 100.0 * gyro);
     output = p_out + d_out;
 
-    target_gyro_z = -(float)output; // 方向环输出期望角速度
+    // target_gyro_z = -(float)output; // 方向环输出期望角速度
+    changed_speed = output;
 }
 
 void dir_pid_sep (float error, float last_error) {
@@ -448,7 +452,8 @@ int16 motor_closed_loop_control(motor_struct *sptr) {
     sptr->out_motor_pid += (int16)(sptr->Kp_motor * sptr->out_p + sptr->Ki_motor * sptr->out_i + sptr->Kd_motor * sptr->out_d);
 	
 //	if (sptr->err >= 150)  sptr->out_i = 0;
-    if (sptr->Ki_motor != 0)  sptr->out_i = MINMAX(sptr->out_i, -5000, 5000);
+    if (sptr->Ki_motor != 0)  sptr->out_i = MINMAX(sptr->out_i, -6000, 6000); // 限幅
+    // sptr->out_i = abs(sptr->out_i) > 7000 ? 0 : sptr->out_i; // 死区
     // sptr->out_motor_pid = MINMAX(sptr->out_motor_pid, -8000, 8000);
 
     return sptr->out_motor_pid;

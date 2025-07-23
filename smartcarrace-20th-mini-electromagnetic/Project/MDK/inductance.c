@@ -111,7 +111,7 @@ void direction_adc_get(void)
     // 环岛判断 五电感
     // if (flag == 0 && flag1 == 0 && AD_ONE[2] >= 60) {
     // if (flag == 0 && ((AD_ONE[0] >= 25 && AD_ONE[3] >= 25 && AD_ONE[2] >= 35 && (AD_ONE[1] <= 20 || AD_ONE[4] <= 20)))) {
-    if (flag == 0 && AD_ONE[0] + AD_ONE[3] >= 65 && AD_ONE[1] <= 10 && AD_ONE[4] <= 10) {
+    if (flag == 0 && AD_ONE[0] + AD_ONE[3] >= 80 && AD_ONE[1] <= 10 && AD_ONE[4] <= 10) {
 		encoder_temp = encoder_ave;
 		flag = 1;
     }
@@ -122,19 +122,19 @@ void direction_adc_get(void)
     if (AD_ONE[0] + AD_ONE[1] + AD_ONE[3] + AD_ONE[4] < 4)
         aaddcc.err_dir = 0;
 
-    else {
-        adc_left_dir = sqrt(A_ * AD_ONE[0] * AD_ONE[0] + B_ * AD_ONE[1] * AD_ONE[1]);
-		adc_right_dir = sqrt(A_ * AD_ONE[3] * AD_ONE[3] + B_ *   AD_ONE[4] * AD_ONE[4]);
-		//adc_left_dir = sqrt(AD_ONE[0] * AD_ONE[0]);
-		//adc_right_dir = sqrt(AD_ONE[4] * AD_ONE[4]); 
+    // else {
+    //     adc_left_dir = sqrt(A_ * AD_ONE[0] * AD_ONE[0] + B_ * AD_ONE[1] * AD_ONE[1]);
+	// 	adc_right_dir = sqrt(A_ * AD_ONE[3] * AD_ONE[3] + B_ *   AD_ONE[4] * AD_ONE[4]);
+	// 	//adc_left_dir = sqrt(AD_ONE[0] * AD_ONE[0]);
+	// 	//adc_right_dir = sqrt(AD_ONE[4] * AD_ONE[4]); 
                   
-        aaddcc.err_dir = 50 * ((adc_left_dir - adc_right_dir) / (adc_left_dir + adc_right_dir));
-    }
+    //     aaddcc.err_dir = 50 * ((adc_left_dir - adc_right_dir) / (adc_left_dir + adc_right_dir));
+    // }
     
-	// else {
-	// 	aaddcc.err_dir = 30 * (A_ * (AD_ONE[0] - AD_ONE[3]) + B_ * (AD_ONE[1] - AD_ONE[4])) /
-	// 						  (A_ * (AD_ONE[0] + AD_ONE[3]) + C_ * fabs(AD_ONE[1] - AD_ONE[4]));
-	// }
+	else {
+		aaddcc.err_dir = 50 * (A_ * (AD_ONE[0] - AD_ONE[3]) + B_ * (AD_ONE[1] - AD_ONE[4])) /
+							  (A_ * (AD_ONE[0] + AD_ONE[3]) + C_ * fabs(AD_ONE[1] - AD_ONE[4]));
+	}
     
     // 十字补偿 12mm的车中间电感坏了，暂时不用
     // if (flag == 0 && AD_ONE[2] < 13) 

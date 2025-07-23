@@ -5,13 +5,13 @@
             "includePath": [
                 "F:\\keil5\\C251\\INC",
                 "F:\\keil5\\C251\\INC\\STC",
-                "c:\\Users\\czj\\Desktop\\19mm\\smartcarrace-20th-mini-electromagnetic\\Libraries\\libraries",
-                "c:\\Users\\czj\\Desktop\\19mm\\smartcarrace-20th-mini-electromagnetic\\Libraries\\seekfree_libraries",
-                "c:\\Users\\czj\\Desktop\\19mm\\smartcarrace-20th-mini-electromagnetic\\Libraries\\seekfree_peripheral",
-                "c:\\Users\\czj\\Desktop\\19mm\\smartcarrace-20th-mini-electromagnetic\\Project\\CODE",
-                "c:\\Users\\czj\\Desktop\\19mm\\smartcarrace-20th-mini-electromagnetic\\Project\\USER\\inc",
-                "c:\\Users\\czj\\Desktop\\19mm\\smartcarrace-20th-mini-electromagnetic\\Project\\USER\\src",
-                "c:\\Users\\czj\\Desktop\\19mm\\smartcarrace-20th-mini-electromagnetic\\Libraries\\seekfree_components"
+                "c:\\Users\\czj\\Desktop\\12mm9v不带角速度环\\smartcarrace-20th-mini-electromagnetic\\Libraries\\libraries",
+                "c:\\Users\\czj\\Desktop\\12mm9v不带角速度环\\smartcarrace-20th-mini-electromagnetic\\Libraries\\seekfree_libraries",
+                "c:\\Users\\czj\\Desktop\\12mm9v不带角速度环\\smartcarrace-20th-mini-electromagnetic\\Libraries\\seekfree_peripheral",
+                "c:\\Users\\czj\\Desktop\\12mm9v不带角速度环\\smartcarrace-20th-mini-electromagnetic\\Project\\CODE",
+                "c:\\Users\\czj\\Desktop\\12mm9v不带角速度环\\smartcarrace-20th-mini-electromagnetic\\Project\\USER\\inc",
+                "c:\\Users\\czj\\Desktop\\12mm9v不带角速度环\\smartcarrace-20th-mini-electromagnetic\\Project\\USER\\src",
+                "c:\\Users\\czj\\Desktop\\12mm9v不带角速度环\\smartcarrace-20th-mini-electromagnetic\\Libraries\\seekfree_components"
             ],
             "defines": [
                 "__C251__",

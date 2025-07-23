@@ -225,15 +225,15 @@ void UART4_Isr() interrupt 18
 					case 'd':
 						kd = value;
 						break;
-					// case 'D':
-					// 	kd_imu = value;
-					// 	break;
-                    case 'P':
-                        kp_gyro = value;
-                        break;
-                    case 'D':
-                        kd_gyro = value;
-                        break;
+					case 'D':
+						kd_imu = value;
+						break;
+                    // case 'P':
+                    //     kp_gyro = value;
+                    //     break;
+                    // case 'D':
+                    //     kd_gyro = value;
+                    //     break;
                     case 't':
                         target_gyro_z = value;
                         break;
