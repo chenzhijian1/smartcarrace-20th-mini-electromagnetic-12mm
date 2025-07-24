@@ -868,8 +868,8 @@ void ips114_show(void)
 void angle_gyro()
 {
 	if (imu660ra_gyro_z > 4 || imu660ra_gyro_z < -4)
-		yaw += (((float)imu660ra_gyro_z - GYRO_OFFSET) / 16.4f) * 0.005;
-//	yaw += (gyro_z / 16.4f) * 0.005;
+		// yaw += (((float)imu660ra_gyro_z - GYRO_OFFSET) / 16.4f) * 0.005;
+	yaw += (gyro_z) * 0.005;
 }
 
 void pit_callback(void)
@@ -895,7 +895,7 @@ float StrToDouble(const char *s)
     int i = 0;
     int k = 0;
     float j;
-    int flag = 1;
+    int symbol = 1;
     float result = 0.0;
     if (s[i] == '+')
     {
@@ -904,7 +904,7 @@ float StrToDouble(const char *s)
     if (s[i] == '-')
     {
         i++;
-        flag = -1;
+        symbol = -1;
     }
     while (s[i] != '\0' && s[i] != '.')
     {
@@ -923,7 +923,7 @@ float StrToDouble(const char *s)
             i++;
         }
     }
-    result = flag * result;
+    result = symbol * result;
     return result;
 }
 

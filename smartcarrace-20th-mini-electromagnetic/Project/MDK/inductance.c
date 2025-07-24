@@ -1,16 +1,16 @@
 #include "inductance.h"
 
-#define MAX_TRANSVERSE 2000
-#define MAX_PORTRAINT 2000
+#define MAX_TRANSVERSE 2000.0f
+#define MAX_PORTRAINT 2000.0f
 
 uint8 cnt = 0;
-float AD_ONE_last = 100.0;
+float AD_ONE_last = 100.0f;
 uint8 flag1 = 0;
 
 /* 电感数据 */
 adc_struct aaddcc = {0}; // 定义电感adc采集结构体
 
-float MAX_ADC[NUM] = {MAX_TRANSVERSE, MAX_PORTRAINT, 2000,  MAX_TRANSVERSE, MAX_PORTRAINT};// 每次更换电感和赛道后需要调整
+float MAX_ADC[NUM] = {MAX_TRANSVERSE, MAX_PORTRAINT, 2000.0f,  MAX_TRANSVERSE, MAX_PORTRAINT};// 每次更换电感和赛道后需要调整
 //float MAX_ADC[NUM] = {MAX_TRANSVERSE, MAX_PORTRAINT,3700,  MAX_TRANSVERSE, MAX_PORTRAINT};
 uint16 AD_value[NUM][5];  
 //uint16 AD_value[NUM][4];    // 原始采集电感数
@@ -69,7 +69,7 @@ void direction_adc_get(void)
     }
 
     for (i = 0; i < NUM; i++) {
-        ad_ave[i] = (AD_value[i][1] + AD_value[i][2] + AD_value[i][3]) * 0.333;
+        ad_ave[i] = (uint16)((AD_value[i][1] + AD_value[i][2] + AD_value[i][3]) * 0.333);
 //        if (ad_ave[i] > MAX_ADC[i])
 //            MAX_ADC[i] = ad_ave[i];
     }
@@ -82,7 +82,7 @@ void direction_adc_get(void)
         if (MAX_ADC[i] == 0)
             MAX_ADC[i] = 1; // 防止除以0的情况
 
-        AD_ONE[i] = (float)(ad_ave[i] / MAX_ADC[i]);
+        AD_ONE[i] = (float)ad_ave[i] / MAX_ADC[i];
 
         if (AD_ONE[i] < 0.0)
             AD_ONE[i] = 0.001;
@@ -111,7 +111,8 @@ void direction_adc_get(void)
     // 环岛判断 五电感
     // if (flag == 0 && flag1 == 0 && AD_ONE[2] >= 60) {
     // if (flag == 0 && ((AD_ONE[0] >= 25 && AD_ONE[3] >= 25 && AD_ONE[2] >= 35 && (AD_ONE[1] <= 20 || AD_ONE[4] <= 20)))) {
-    if (flag == 0 && AD_ONE[0] + AD_ONE[3] >= 80 && AD_ONE[1] <= 10 && AD_ONE[4] <= 10) {
+    // if (flag == 0 && AD_ONE[0] + AD_ONE[3] >= 80 && AD_ONE[1] <= 10 && AD_ONE[4] <= 10) {
+    if (flag == 0 && (AD_ONE[0] + AD_ONE[3] >= 70.0f)) {
 		encoder_temp = encoder_ave;
 		flag = 1;
     }
@@ -119,7 +120,7 @@ void direction_adc_get(void)
     // 差比和计算
     aaddcc.last_err_dir = aaddcc.err_dir;
 
-    if (AD_ONE[0] + AD_ONE[1] + AD_ONE[3] + AD_ONE[4] < 4)
+    if (AD_ONE[0] + AD_ONE[1] + AD_ONE[3] + AD_ONE[4] < 6)
         aaddcc.err_dir = aaddcc.last_err_dir;
 
     // else {
