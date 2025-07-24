@@ -15,7 +15,7 @@ float MAX_ADC[NUM] = {MAX_TRANSVERSE, MAX_PORTRAINT, 2000.0f,  MAX_TRANSVERSE, M
 uint16 AD_value[NUM][5];  
 //uint16 AD_value[NUM][4];    // 原始采集电感数
 uint16 ad_ave[NUM] = {0};     // 滤波处理后的电感
-float AD_ONE[NUM] = {0};      // 归一化后的电感
+ float AD_ONE[NUM] = {0};      // 归一化后的电感
 uint16 middle[3] = {0}; 
 float adc_left_dir = 0.0;
 float adc_right_dir = 0.0;
@@ -111,8 +111,7 @@ void direction_adc_get(void)
     // 环岛判断 五电感
     // if (flag == 0 && flag1 == 0 && AD_ONE[2] >= 60) {
     // if (flag == 0 && ((AD_ONE[0] >= 25 && AD_ONE[3] >= 25 && AD_ONE[2] >= 35 && (AD_ONE[1] <= 20 || AD_ONE[4] <= 20)))) {
-    // if (flag == 0 && AD_ONE[0] + AD_ONE[3] >= 80 && AD_ONE[1] <= 10 && AD_ONE[4] <= 10) {
-    if (flag == 0 && (AD_ONE[0] + AD_ONE[3] >= 70.0f)) {
+    if (flag == 0 && ((uint16)AD_ONE[0] + (uint16)AD_ONE[3] >= 45 && AD_ONE[1] <= 10 && AD_ONE[4] <= 10)) {
 		encoder_temp = encoder_ave;
 		flag = 1;
     }

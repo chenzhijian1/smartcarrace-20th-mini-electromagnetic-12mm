@@ -8,23 +8,38 @@ extern uint8 timing_started_start;
 extern uint32 timer_cnt;
 
 void main(void)
-{
+{   
     board_init(); // 初始化寄存器，勿删除
+    delay_ms(500);
+
+    
     EA = 0;
-	
-    delay_ms(100);        // 延时100ms，等待主板其他外设上电
-    ips114_init();        // 屏幕初始化
-    beep_init();          // 蜂鸣器
+    motor_driver_init_ir();      // 电机
+    voltage_init();       // 电压检测
+
+    while (1) {
+        voltage = read_voltage();
+        if (voltage > 5000)
+            break;
+    }
+    
     encoder_init();       // 编码器
     direction_adc_init(); // 电感     
-    motor_driver_init_ir();  // 电机
+    
 	// motor_driver_init_dr();
+    wireless_uart_init(); // 无线串口
+    ips114_init();        // 屏幕初始化
     imu660ra_init();      // 陀螺仪
 	// offset_init();        // 零漂
-    wireless_uart_init(); // 无线串口
-	voltage_init();       // 电压检测
-	
-	// while (voltage < 11500)  voltage = read_voltage();
+
+	while (1) {
+        voltage = read_voltage();
+        if (voltage > 11000)
+            break;
+    }
+
+    // 使能全局中断
+    EA = 1;
 
     pit_timer_ms(TIM_1, 5);  // 电感、陀螺仪、编码器、串口
     pit_timer_ms(TIM_4, 5);  // 电机、电压检测、路径记忆
@@ -49,11 +64,11 @@ void main(void)
 //     kd_motor = 0.0f;
 	
 //     normal_speed = 0.0f;    // 运行速度
-//     speed_huandao = 150.0f; // 环岛速度
 // //	s = 0.27f; // 速度策略系数
 // 	s = 0.0f;
 
-    // normal_speed = 200.0f;    // 运行速度
+    flag = 4;
+    normal_speed = 200.0f;    // 运行速度
 	
     // 电感系数逐飞
 	// A_ = 1.0f;
@@ -74,9 +89,6 @@ void main(void)
     // A_ = 1.0f;
     // B_ = 1.0f;
     // C_ = 1.0f;
-
-    // 使能全局中断
-    EA = 1;
 
     while(1) {
         if(P75 == 0) // 调参模式 开关在上
@@ -122,51 +134,55 @@ void main(void)
 
         if (KEY4_PIN == 0)  flag_stop = !flag_stop;  // 从上往下第三个
 		
- 		if (send_flag) {
- 			send_flag = 0;
-            printf("%.1f,%.1f,%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,",
-                   kpa, kpb, kd, kd_imu,
-                   kp_gyro, kd_gyro,
-                   motor_left.Kp_motor, motor_left.Ki_motor);
+ 		// if (send_flag) {
+ 		// 	send_flag = 0;
+        //     printf("%.1f,%.1f,%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,",
+        //            kpa, kpb, kd, kd_imu,
+        //            kp_gyro, kd_gyro,
+        //            motor_left.Kp_motor, motor_left.Ki_motor);
 
-            printf("%.2f,%.1f,", aaddcc.err_dir, target_gyro_z);
+        //     printf("%.2f,%.1f,", aaddcc.err_dir, target_gyro_z);
 
- 			// printf("%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,",
- 			// 		motor_left.setspeed, motor_left.encoder_data,
- 			// 		motor_right.setspeed, motor_right.encoder_data,
- 			// 		abs(motor_left.setspeed - motor_right.setspeed),
- 			// 		motor_left.duty1,
- 			// 		motor_right.duty1,
- 			// 		s,
- 			// 		normal_speed);
+ 		// 	// printf("%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,",
+ 		// 	// 		motor_left.setspeed, motor_left.encoder_data,
+ 		// 	// 		motor_right.setspeed, motor_right.encoder_data,
+ 		// 	// 		abs(motor_left.setspeed - motor_right.setspeed),
+ 		// 	// 		motor_left.duty1,
+ 		// 	// 		motor_right.duty1,
+ 		// 	// 		s,
+ 		// 	// 		normal_speed);
 
-            printf("%d,%d,%d,%d,%d,%d,%d,",
-                    motor_left.setspeed, motor_left.encoder_data,
-                    motor_right.setspeed, motor_right.encoder_data,
-                    motor_left.duty1,
-                    motor_right.duty1,
-                    normal_speed);
+        //     printf("%d,%d,%d,%d,%d,%d,%d,",
+        //             motor_left.setspeed, motor_left.encoder_data,
+        //             motor_right.setspeed, motor_right.encoder_data,
+        //             motor_left.duty1,
+        //             motor_right.duty1,
+        //             normal_speed);
 			
- 			printf("%d,", voltage);
+ 		// 	printf("%d,", voltage);
 					
- 			printf("%.1f,%.1f,%.1f,%.1f,%.1f,", AD_ONE[0],AD_ONE[1],AD_ONE[2],AD_ONE[3],AD_ONE[4]);
-            // printf("%d,%d,%d,%d,%d,", ad_ave[0], ad_ave[1], ad_ave[2], ad_ave[3], ad_ave[4]);
+ 		// 	printf("%.1f,%.1f,%.1f,%.1f,%.1f,", AD_ONE[0],AD_ONE[1],AD_ONE[2],AD_ONE[3],AD_ONE[4]);
+        //     // printf("%d,%d,%d,%d,%d,", ad_ave[0], ad_ave[1], ad_ave[2], ad_ave[3], ad_ave[4]);
 			
- 			// printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
+ 		// 	// printf("%.2f,", (motor_left.encoder_data + motor_right.encoder_data) / 2 / 122.5);
 
-            printf("%.1f,", gyro_z);
+        //     printf("%.1f,", gyro_z);
 
-            printf("%.1f,%.1f,", distance_before_huandao, distance_after_huandao);
+        //     printf("%.1f,%.1f,", distance_before_huandao, distance_after_huandao);
 
-            printf("%.1f,%.1f,%.1f,", A_, B_, C_);
+        //     printf("%.1f,%.1f,%.1f,", A_, B_, C_);
 
-            printf("%.1f,%.1f,%.1f,%.1f\r\n", motor_left.Kp_motor * motor_left.out_p, motor_left.Ki_motor * motor_left.out_i, motor_left.Kp_motor * motor_right.out_p, motor_left.Ki_motor * motor_right.out_i);
-            // printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z / 16.4);
- 		}
+        //     printf("%.1f,%.1f,%.1f,%.1f,", motor_left.Kp_motor * motor_left.out_p, motor_left.Ki_motor * motor_left.out_i, motor_left.Kp_motor * motor_right.out_p, motor_left.Ki_motor * motor_right.out_i);
+
+        //     printf("%.1f\r\n", AD_ONE[0] + AD_ONE[3]);
+        //     // printf("%.2f,%.6f,%d\r\n", yaw, Gyro_offset_z, imu660ra_gyro_z / 16.4);
+ 		// }
+
         // if (send_flag_nav && path_point_count < path_point_count_threshold) {
         //     send_flag_nav = 0;
         //     printf("%d,%.2f,%.2f,%d,%.2f\r\n", path_point_count, path_points[path_point_count].distance,
         //         path_points[path_point_count].yaw_relative, path_points[path_point_count].isturn, imu660ra_gyro_z / 16.4f);
         // }
+        // if (flag == 1)  printf("%.1f\r\n", AD_ONE[0] + AD_ONE[3]);
     }
 }

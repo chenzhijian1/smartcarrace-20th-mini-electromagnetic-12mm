@@ -14,7 +14,7 @@ uint8 flag2 = 0;
 
 const uint16 d = 165; // 车宽
 
-float distance_before_huandao = 135;
+float distance_before_huandao = 85;
 float distance_after_huandao = 140;
 float angle_in_threshold = 30; // 环岛入口角度阈值
 float angle_out_threshold = 30; // 环岛出口角度阈值
@@ -36,7 +36,7 @@ float kd_direction_3 = 11;
 // 新方向环
 float kpa = 22.0f; // 25 27
 float kpb = 20.0f; // 25 30
-float kd = 80.0f; // 100 110
+float kd = 100.0f; // 100 110
 float kd_imu = 0.0f;
 
 // 角速度环
@@ -322,9 +322,9 @@ void encoder_get(void) {
     ctimer_count_clean(SPEEDL_PULSE);
     ctimer_count_clean(SPEEDR_PULSE);
 
-    if (SPEEDL_DIR == 1) //观察屏幕输出调整
+    if (SPEEDL_DIR == 0) //观察屏幕输出调整  1 0是长前瞻 0 1是短前瞻
         motor_left.encoder_data = -motor_left.encoder_data;
-    if (SPEEDR_DIR == 0)
+    if (SPEEDR_DIR == 1)
         motor_right.encoder_data = -motor_right.encoder_data;
 }
 
@@ -530,16 +530,18 @@ void motor_driver_init_ir(void) {
 }
 
 void motor_driver_init_dr(void) {
+    motor_struct_parameter_init(&motor_left, 0); // 速度环结构体参数初始化
+    motor_struct_parameter_init(&motor_right, 0);
     pwm_init(PWMA_CH2P_P62, 12500, 0);           // 初始化PWM2  使用P62引脚  初始化频率为17Khz
     pwm_init(PWMA_CH4P_P66, 12500, 0);           // 初始化PWM4  使用P66引脚  初始化频率为17Khz
 	P6M1 &= ~(1<<4); P6M0 |= (1<<4);  			 // 设置P64为推挽输出
 	P6M1 &= ~(1<<0); P6M0 |= (1<<0);  			 // 设置P60为推挽输出
-	motor_struct_parameter_init(&motor_left, 0); // 速度环结构体参数初始化
-    motor_struct_parameter_init(&motor_right, 0);
 }
 
 // 电机速度环初始化；*sptr：电机结构体的首地址 sspeed：设置的初速度
 void motor_struct_parameter_init(motor_struct *sptr, int16 sspeed) {
+    sptr->duty1 = 0; // int32
+    
     sptr->setspeed = sspeed; // int16
     sptr->actspeed = 0;      // int16
     sptr->encoder_data = 0;  // int16
@@ -548,7 +550,7 @@ void motor_struct_parameter_init(motor_struct *sptr, int16 sspeed) {
     sptr->err1 = 0; // int16
     sptr->err2 = 0;
 
-    sptr->duty1 = 0; // int32
+    
     sptr->out_p = 0;
     sptr->out_i = 0;
     sptr->out_d = 0;
