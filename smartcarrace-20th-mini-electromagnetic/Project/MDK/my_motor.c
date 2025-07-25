@@ -4,18 +4,18 @@
 // 环岛
 #define huandao_num 1 // 环岛个数
 uint8 huandao_count = 0; // 环岛计数
-uint8 huandao_directions[huandao_num] = {1};      // 0 表示左环岛, 1 表示右环岛
+uint8 huandao_directions[huandao_num] = {0};      // 0 表示左环岛, 1 表示右环岛
 // float huandao_hight_speed[huandao_num] = {190, 170, 0, 0}; // 第n个环岛高速轮
 // float huandao_low_speed[huandao_num] = {65, 75, 75, 0};   // 第n个环岛低速轮
-uint16 huandao_r[huandao_num] = {250}; // 第n个环岛半径
+uint16 huandao_r[huandao_num] = {300}; // 第n个环岛半径
 // const uint16 r_out = 800; // 出环半径
 float ratio = 0;
 uint8 flag2 = 0;
 
 const uint16 d = 165; // 车宽
 
-float distance_before_huandao = 85;
-float distance_after_huandao = 140;
+float distance_before_huandao = 150; // 环岛前距离
+float distance_after_huandao = 140; // 环岛后距离
 float angle_in_threshold = 30; // 环岛入口角度阈值
 float angle_out_threshold = 30; // 环岛出口角度阈值
 
@@ -193,10 +193,10 @@ void speed_change()
             
             if (encoder_ave - encoder_temp < distance_before_huandao) { //没到环岛交点
 				//直行
-				// set_leftspeed = normal_speed;
-				// set_rightspeed = normal_speed;
-                set_leftspeed = 0;
-                set_rightspeed = 0;
+				set_leftspeed = normal_speed;
+				set_rightspeed = normal_speed;
+                // set_leftspeed = 0;
+                // set_rightspeed = 0;
             }
             else  flag = 2;
             break;
@@ -211,7 +211,7 @@ void speed_change()
             ratio = (float)(huandao_r[huandao_count] - (d/2)) / (float)(huandao_r[huandao_count] + (d/2));
 
             if (flag_huandao == 0) { // 左环岛
-                target_angle_out = target_angle_in - 350; // 目标出环角度
+                target_angle_out = target_angle_in - 330; // 目标出环角度
 
                 set_leftspeed = (int16)(normal_speed * ratio);
                 set_rightspeed = normal_speed;
@@ -222,7 +222,7 @@ void speed_change()
                 }
             }
             else { // 右环岛
-                target_angle_out = target_angle_in + 350; // 目标出环角度
+                target_angle_out = target_angle_in + 330; // 目标出环角度
                 
                 set_leftspeed = normal_speed;
                 set_rightspeed = (int16)(normal_speed * ratio);
@@ -322,9 +322,9 @@ void encoder_get(void) {
     ctimer_count_clean(SPEEDL_PULSE);
     ctimer_count_clean(SPEEDR_PULSE);
 
-    if (SPEEDL_DIR == 0) //观察屏幕输出调整  1 0是长前瞻 0 1是短前瞻
+    if (SPEEDL_DIR == 1) //观察屏幕输出调整  1 0是长前瞻 0 1是短前瞻
         motor_left.encoder_data = -motor_left.encoder_data;
-    if (SPEEDR_DIR == 1)
+    if (SPEEDR_DIR == 0)
         motor_right.encoder_data = -motor_right.encoder_data;
 }
 
