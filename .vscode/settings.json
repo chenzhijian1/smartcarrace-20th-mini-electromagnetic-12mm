@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "board.h": "c",
+        "my_motor.h": "c",
+        "zf_eeprom.h": "c",
+        "my_peripheral.h": "c",
+        "headfile.h": "c",
+        "zf_delay.h": "c",
+        "seekfree_18tft.h": "c",
+        "seekfree_printf.h": "c",
+        "cmath": "c",
+        "inductance.h": "c"
+    }
+}
